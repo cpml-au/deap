@@ -61,6 +61,7 @@ class History(object):
        number of generation is large.
 
     """
+
     def __init__(self):
         self.genealogy_index = 0
         self.genealogy_history = dict()
@@ -172,6 +173,7 @@ class Statistics(object):
         >>> s.compile([5, 6, 7, 8])     # doctest: +SKIP
         {'mean': 6.5, 'max': 8}
     """
+
     def __init__(self, key=identity):
         self.key = key
         self.functions = dict()
@@ -226,6 +228,7 @@ class MultiStatistics(dict):
         >>> mstats.compile([[0.0, 1.0, 1.0, 5.0], [2.0, 5.0]])  # doctest: +SKIP
         {'length': {'mean': 3.0, 'max': 4}, 'item': {'mean': 1.0, 'max': 2.0}}
     """
+
     def compile(self, data):
         """Calls :meth:`Statistics.compile` with *data* of each
         :class:`Statistics` object.
@@ -337,7 +340,8 @@ class Logbook(list):
         in the dictionary are recorded in a chapter entitled as the name of the
         key part of the pair. Chapters are also Logbook.
         """
-        apply_to_all = {k: v for k, v in infos.items() if not isinstance(v, dict)}
+        apply_to_all = {k: v for k,
+                        v in infos.items() if not isinstance(v, dict)}
         for key, value in list(infos.items()):
             if isinstance(value, dict):
                 chapter_infos = value.copy()
@@ -460,7 +464,8 @@ class Logbook(list):
             header = [[] for i in range(nlines)]
             for j, name in enumerate(columns):
                 if name in chapters_txt:
-                    length = max(len(line.expandtabs()) for line in chapters_txt[name])
+                    length = max(len(line.expandtabs())
+                                 for line in chapters_txt[name])
                     blanks = nlines - 2 - offsets[name]
                     for i in range(blanks):
                         header[i].append(" " * length)
@@ -469,7 +474,8 @@ class Logbook(list):
                     for i in range(offsets[name]):
                         header[blanks + 2 + i].append(chapters_txt[name][i])
                 else:
-                    length = max(len(line[j].expandtabs()) for line in str_matrix)
+                    length = max(len(line[j].expandtabs())
+                                 for line in str_matrix)
                     for line in header[:-1]:
                         line.append(" " * length)
                     header[-1].append(name)
@@ -506,6 +512,7 @@ class HallOfFame(object):
     (without being one completely). It is possible to retrieve its length, to
     iterate on it forward and backward and to get an item or a slice from it.
     """
+
     def __init__(self, maxsize, similar=eq):
         self.maxsize = maxsize
         self.keys = list()
@@ -604,6 +611,7 @@ class ParetoFront(HallOfFame):
     Since, the Pareto front hall of fame inherits from the :class:`HallOfFame`,
     it is sorted lexicographically at every moment.
     """
+
     def __init__(self, similar=eq):
         HallOfFame.__init__(self, None, similar)
 

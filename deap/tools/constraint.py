@@ -39,6 +39,7 @@ class DeltaPenalty(object):
 
     See the :doc:`/tutorials/advanced/constraints` for an example.
     """
+
     def __init__(self, feasibility, delta, distance=None):
         self.fbty_fct = feasibility
         if not isinstance(delta, Sequence):
@@ -53,7 +54,8 @@ class DeltaPenalty(object):
             if self.fbty_fct(individual):
                 return func(individual, *args, **kwargs)
 
-            weights = tuple(1 if w >= 0 else -1 for w in individual.fitness.weights)
+            weights = tuple(1 if w >= 0 else -
+                            1 for w in individual.fitness.weights)
 
             dists = tuple(0 for w in individual.fitness.weights)
             if self.dist_fct is not None:
@@ -117,10 +119,12 @@ class ClosestValidPenalty(object):
             f_fbl = func(f_ind, *args, **kwargs)
             # print("feasible", f_fbl)
 
-            weights = tuple(1.0 if w >= 0 else -1.0 for w in individual.fitness.weights)
+            weights = tuple(1.0 if w >= 0 else -
+                            1.0 for w in individual.fitness.weights)
 
             if len(weights) != len(f_fbl):
-                raise IndexError("Fitness weights and computed fitness are of different size.")
+                raise IndexError(
+                    "Fitness weights and computed fitness are of different size.")
 
             dists = tuple(0 for w in individual.fitness.weights)
             if self.dist_fct is not None:
@@ -138,7 +142,8 @@ class ClosestValidPenalty(object):
 ClosestValidPenality = ClosestValidPenalty
 
 # List of exported function names.
-__all__ = ['DeltaPenalty', 'ClosestValidPenalty', 'DeltaPenality', 'ClosestValidPenality']
+__all__ = ['DeltaPenalty', 'ClosestValidPenalty',
+           'DeltaPenality', 'ClosestValidPenality']
 
 if __name__ == "__main__":
     from deap import base
@@ -172,7 +177,8 @@ if __name__ == "__main__":
 
     toolbox = base.Toolbox()
     toolbox.register("evaluate", benchmarks.zdt2)
-    toolbox.decorate("evaluate", ClosestValidPenalty(valid, closest_feasible, 1.0e-6, distance))
+    toolbox.decorate("evaluate", ClosestValidPenalty(
+        valid, closest_feasible, 1.0e-6, distance))
 
     ind1 = creator.Individual((-5.6468535666e-01, 2.2483050478e+00, -1.1087909644e+00, -1.2710112861e-01, 1.1682438733e+00, -1.3642007438e+00, -2.1916417835e-01, -5.9137308999e-01, -1.0870160336e+00, 6.0515070232e-01, 2.1532075914e+00, -2.6164718271e-01, 1.5244071578e+00, -1.0324305612e+00, 1.2858152343e+00, -1.2584683962e+00, 1.2054392372e+00, -1.7429571973e+00, -1.3517256013e-01, -2.6493429355e+00, -1.3051320798e-01, 2.2641961090e+00, -2.5027232340e+00, -1.2844874148e+00, 1.9955852925e+00, -1.2942218834e+00, 3.1340109155e+00, 1.6440111097e+00, -1.7750105857e+00, 7.7610242710e-01))
     print(toolbox.evaluate(ind1))

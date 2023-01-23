@@ -3,9 +3,11 @@ from collections import defaultdict, namedtuple
 from itertools import chain
 import math
 from operator import attrgetter, itemgetter
-import random
+import deap
 
-import numpy
+random = deap.rng
+
+numpy = deap.np
 
 ######################################
 # Non-Dominated Sorting   (NSGA-II)  #
@@ -44,7 +46,8 @@ def selNSGA2(individuals, k, nd='standard'):
     chosen = list(chain(*pareto_fronts[:-1]))
     k = k - len(chosen)
     if k > 0:
-        sorted_front = sorted(pareto_fronts[-1], key=attrgetter("fitness.crowding_dist"), reverse=True)
+        sorted_front = sorted(
+            pareto_fronts[-1], key=attrgetter("fitness.crowding_dist"), reverse=True)
         chosen.extend(sorted_front[:k])
 
     return chosen
@@ -167,7 +170,8 @@ def selTournamentDCD(individuals, k):
         raise ValueError("selTournamentDCD: k must be less than or equal to individuals length")
 
     if k == len(individuals) and k % 4 != 0:
-        raise ValueError("selTournamentDCD: k must be divisible by four if k == len(individuals)")
+        raise ValueError(
+            "selTournamentDCD: k must be divisible by four if k == len(individuals)")
 
     def tourn(ind1, ind2):
         if ind1.fitness.dominates(ind2.fitness):
@@ -389,7 +393,8 @@ def splitB(best, worst, obj):
     most elements. The values equal to the median are attributed so as
     to balance the four resulting sets as much as possible.
     """
-    median_ = median(best if len(best) > len(worst) else worst, itemgetter(obj))
+    median_ = median(best if len(best) > len(
+        worst) else worst, itemgetter(obj))
     best1_a, best2_a, best1_b, best2_b = [], [], [], []
     for fit in best:
         if fit[obj] > median_:
@@ -414,8 +419,10 @@ def splitB(best, worst, obj):
             worst1_a.append(fit)
             worst2_b.append(fit)
 
-    balance_a = abs(len(best1_a) - len(best2_a) + len(worst1_a) - len(worst2_a))
-    balance_b = abs(len(best1_b) - len(best2_b) + len(worst1_b) - len(worst2_b))
+    balance_a = abs(len(best1_a) - len(best2_a) +
+                    len(worst1_a) - len(worst2_a))
+    balance_b = abs(len(best1_b) - len(best2_b) +
+                    len(worst1_b) - len(worst2_b))
 
     if balance_a <= balance_b:
         return best1_a, best2_a, worst1_a, worst2_a
@@ -472,6 +479,7 @@ class selNSGA3WithMemory(object):
         >>> toolbox.register("select", selNSGA3WithMemory(ref_points))
 
     """
+
     def __init__(self, ref_points, nd="log"):
         self.ref_points = ref_points
         self.nd = nd
@@ -538,26 +546,33 @@ def selNSGA3(individuals, k, ref_points, nd="log", best_point=None,
 
     # Extract fitnesses as a numpy array in the nd-sort order
     # Use wvalues * -1 to tackle always as a minimization problem
-    fitnesses = numpy.array([ind.fitness.wvalues for f in pareto_fronts for ind in f])
+    fitnesses = numpy.array(
+        [ind.fitness.wvalues for f in pareto_fronts for ind in f])
     fitnesses *= -1
 
     # Get best and worst point of population, contrary to pymoo
     # we don't use memory
     if best_point is not None and worst_point is not None:
-        best_point = numpy.min(numpy.concatenate((fitnesses, best_point), axis=0), axis=0)
-        worst_point = numpy.max(numpy.concatenate((fitnesses, worst_point), axis=0), axis=0)
+        best_point = numpy.min(numpy.concatenate(
+            (fitnesses, best_point), axis=0), axis=0)
+        worst_point = numpy.max(numpy.concatenate(
+            (fitnesses, worst_point), axis=0), axis=0)
     else:
         best_point = numpy.min(fitnesses, axis=0)
         worst_point = numpy.max(fitnesses, axis=0)
 
     extreme_points = find_extreme_points(fitnesses, best_point, extreme_points)
-    front_worst = numpy.max(fitnesses[:sum(len(f) for f in pareto_fronts), :], axis=0)
-    intercepts = find_intercepts(extreme_points, best_point, worst_point, front_worst)
-    niches, dist = associate_to_niche(fitnesses, ref_points, best_point, intercepts)
+    front_worst = numpy.max(
+        fitnesses[:sum(len(f) for f in pareto_fronts), :], axis=0)
+    intercepts = find_intercepts(
+        extreme_points, best_point, worst_point, front_worst)
+    niches, dist = associate_to_niche(
+        fitnesses, ref_points, best_point, intercepts)
 
     # Get counts per niche for individuals in all front but the last
     niche_counts = numpy.zeros(len(ref_points), dtype=numpy.int64)
-    index, counts = numpy.unique(niches[:-len(pareto_fronts[-1])], return_counts=True)
+    index, counts = numpy.unique(
+        niches[:-len(pareto_fronts[-1])], return_counts=True)
     niche_counts[index] = counts
 
     # Choose individuals from all fronts but the last
@@ -566,7 +581,8 @@ def selNSGA3(individuals, k, ref_points, nd="log", best_point=None,
     # Use niching to select the remaining individuals
     sel_count = len(chosen)
     n = k - sel_count
-    selected = niching(pareto_fronts[-1], n, niches[sel_count:], dist[sel_count:], niche_counts)
+    selected = niching(
+        pareto_fronts[-1], n, niches[sel_count:], dist[sel_count:], niche_counts)
     chosen.extend(selected)
 
     if return_memory:
@@ -624,11 +640,14 @@ def associate_to_niche(fitnesses, reference_points, best_point, intercepts):
     fn = (fitnesses - best_point) / (intercepts - best_point + numpy.finfo(float).eps)
 
     # Create distance matrix
-    fn = numpy.repeat(numpy.expand_dims(fn, axis=1), len(reference_points), axis=1)
+    fn = numpy.repeat(numpy.expand_dims(fn, axis=1),
+                      len(reference_points), axis=1)
     norm = numpy.linalg.norm(reference_points, axis=1)
 
     distances = numpy.sum(fn * reference_points, axis=2) / norm.reshape(1, -1)
-    distances = distances[:, :, numpy.newaxis] * reference_points[numpy.newaxis, :, :] / norm[numpy.newaxis, :, numpy.newaxis]
+    distances = distances[:, :, numpy.newaxis] * \
+        reference_points[numpy.newaxis, :, :] / \
+        norm[numpy.newaxis, :, numpy.newaxis]
     distances = numpy.linalg.norm(distances - fn, axis=2)
 
     # Retrieve min distance niche index
@@ -650,19 +669,22 @@ def niching(individuals, k, niches, distances, niche_counts):
         min_count = numpy.min(niche_counts[available_niches])
 
         # Select at most n niches with the minimum count
-        selected_niches = numpy.flatnonzero(numpy.logical_and(available_niches, niche_counts == min_count))
+        selected_niches = numpy.flatnonzero(numpy.logical_and(
+            available_niches, niche_counts == min_count))
         numpy.random.shuffle(selected_niches)
         selected_niches = selected_niches[:n]
 
         for niche in selected_niches:
             # Select from available individuals in niche
-            niche_individuals = numpy.flatnonzero(numpy.logical_and(niches == niche, available))
+            niche_individuals = numpy.flatnonzero(
+                numpy.logical_and(niches == niche, available))
             numpy.random.shuffle(niche_individuals)
 
             # If no individual in that niche, select the closest to reference
             # Else select randomly
             if niche_counts[niche] == 0:
-                sel_index = niche_individuals[numpy.argmin(distances[niche_individuals])]
+                sel_index = niche_individuals[numpy.argmin(
+                    distances[niche_individuals])]
             else:
                 sel_index = niche_individuals[0]
 
@@ -687,10 +709,12 @@ def uniform_reference_points(nobj, p=4, scaling=None):
         else:
             for i in range(left + 1):
                 ref[depth] = i / total
-                points.extend(gen_refs_recursive(ref.copy(), nobj, left - i, total, depth + 1))
+                points.extend(gen_refs_recursive(
+                    ref.copy(), nobj, left - i, total, depth + 1))
         return points
 
-    ref_points = numpy.array(gen_refs_recursive(numpy.zeros(nobj), nobj, p, p, 0))
+    ref_points = numpy.array(gen_refs_recursive(
+        numpy.zeros(nobj), nobj, p, p, 0))
     if scaling is not None:
         ref_points *= scaling
         ref_points += (1 - scaling) / nobj

@@ -12,7 +12,6 @@
 #
 #    You should have received a copy of the GNU Lesser General Public
 #    License along with DEAP. If not, see <http://www.gnu.org/licenses/>.
-
 """The :mod:`gp` module provides the methods and classes to perform
 Genetic Programming with DEAP. It essentially contains the classes to
 build a Genetic Program Tree, and the functions to evaluate it.
@@ -34,6 +33,9 @@ from functools import partial, wraps
 from operator import eq, lt
 
 from . import tools  # Needed by HARM-GP
+import deap
+
+random = deap.rng
 
 ######################################
 # GP Data structure                  #
@@ -67,23 +69,25 @@ class PrimitiveTree(list):
         # Does NOT check for STGP constraints
         if isinstance(key, slice):
             if key.start >= len(self):
-                raise IndexError("Invalid slice object (try to assign a %s"
-                                 " in a tree of size %d). Even if this is allowed by the"
-                                 " list object slice setter, this should not be done in"
-                                 " the PrimitiveTree context, as this may lead to an"
-                                 " unpredictable behavior for searchSubtree or evaluate."
-                                 % (key, len(self)))
+                raise IndexError(
+                    "Invalid slice object (try to assign a %s"
+                    " in a tree of size %d). Even if this is allowed by the"
+                    " list object slice setter, this should not be done in"
+                    " the PrimitiveTree context, as this may lead to an"
+                    " unpredictable behavior for searchSubtree or evaluate." %
+                    (key, len(self)))
             total = val[0].arity
             for node in val[1:]:
                 total += node.arity - 1
             if total != 0:
-                raise ValueError("Invalid slice assignation : insertion of"
-                                 " an incomplete subtree is not allowed in PrimitiveTree."
-                                 " A tree is defined as incomplete when some nodes cannot"
-                                 " be mapped to any position in the tree, considering the"
-                                 " primitives' arity. For instance, the tree [sub, 4, 5,"
-                                 " 6] is incomplete if the arity of sub is 2, because it"
-                                 " would produce an orphan node (the 6).")
+                raise ValueError(
+                    "Invalid slice assignation : insertion of"
+                    " an incomplete subtree is not allowed in PrimitiveTree."
+                    " A tree is defined as incomplete when some nodes cannot"
+                    " be mapped to any position in the tree, considering the"
+                    " primitives' arity. For instance, the tree [sub, 4, 5,"
+                    " 6] is incomplete if the arity of sub is 2, because it"
+                    " would produce an orphan node (the 6).")
         elif val.arity != self[key].arity:
             raise ValueError("Invalid node replacement with a node of a"
                              " different arity.")
@@ -131,8 +135,8 @@ class PrimitiveTree(list):
 
                 if type_ is not None and not issubclass(primitive.ret, type_):
                     raise TypeError("Primitive {} return type {} does not "
-                                    "match the expected one: {}."
-                                    .format(primitive, primitive.ret, type_))
+                                    "match the expected one: {}.".format(
+                                        primitive, primitive.ret, type_))
 
                 expr.append(primitive)
                 if isinstance(primitive, Primitive):
@@ -141,15 +145,16 @@ class PrimitiveTree(list):
                 try:
                     token = eval(token)
                 except NameError:
-                    raise TypeError("Unable to evaluate terminal: {}.".format(token))
+                    raise TypeError(
+                        "Unable to evaluate terminal: {}.".format(token))
 
                 if type_ is None:
                     type_ = type(token)
 
                 if not issubclass(type(token), type_):
                     raise TypeError("Terminal {} type {} does not "
-                                    "match the expected one: {}."
-                                    .format(token, type(token), type_))
+                                    "match the expected one: {}.".format(
+                                        token, type(token), type_))
 
                 expr.append(Terminal(token, False, type_))
         return cls(expr)
@@ -209,8 +214,9 @@ class Primitive(object):
 
     def __eq__(self, other):
         if type(self) is type(other):
-            return all(getattr(self, slot) == getattr(other, slot)
-                       for slot in self.__slots__)
+            return all(
+                getattr(self, slot) == getattr(other, slot)
+                for slot in self.__slots__)
         else:
             return NotImplemented
 
@@ -236,8 +242,9 @@ class Terminal(object):
 
     def __eq__(self, other):
         if type(self) is type(other):
-            return all(getattr(self, slot) == getattr(other, slot)
-                       for slot in self.__slots__)
+            return all(
+                getattr(self, slot) == getattr(other, slot)
+                for slot in self.__slots__)
         else:
             return NotImplemented
 
@@ -362,10 +369,10 @@ class PrimitiveSetTyped(object):
         prim = Primitive(name, in_types, ret_type)
 
         assert name not in self.context or \
-               self.context[name] is primitive, \
-               "Primitives are required to have a unique name. " \
-               "Consider using the argument 'name' to rename your " \
-               "second '%s' primitive." % (name,)
+            self.context[name] is primitive, \
+            "Primitives are required to have a unique name. " \
+            "Consider using the argument 'name' to rename your " \
+            "second '%s' primitive." % (name,)
 
         self._add(prim)
         self.context[prim.name] = primitive
@@ -546,7 +553,6 @@ def genFull(pset, min_, max_, type_=None):
                   is assumed.
     :returns: A full tree with all leaves at the same depth.
     """
-
     def condition(height, depth):
         """Expression generation stops when the depth is equal to height."""
         return depth == height
@@ -566,7 +572,6 @@ def genGrow(pset, min_, max_, type_=None):
                   is assumed.
     :returns: A grown tree with leaves at possibly different depths.
     """
-
     def condition(height, depth):
         """Expression generation stops when the depth is equal to height
         or when it is randomly determined that a node should be a terminal.
@@ -593,36 +598,60 @@ def genHalfAndHalf(pset, min_, max_, type_=None):
     method = random.choice((genGrow, genFull))
     return method(pset, min_, max_, type_)
 
-
-def genRamped(pset, min_, max_, type_=None):
-    """
-    .. deprecated:: 1.0
-        The function has been renamed. Use :func:`~deap.gp.genHalfAndHalf` instead.
-    """
-    warnings.warn("gp.genRamped has been renamed. Use genHalfAndHalf instead.",
-                  FutureWarning)
-    return genHalfAndHalf(pset, min_, max_, type_)
+# PATCH taken from https://gist.github.com/macrintr
 
 
-def generate(pset, min_, max_, condition, type_=None):
-    """Generate a tree as a list of primitives and terminals in a depth-first
-    order. The tree is built from the root to the leaves, and it stops growing
-    the current branch when the *condition* is fulfilled: in which case, it
-    back-tracks, then tries to grow another branch until the *condition* is
-    fulfilled again, and so on. The returned list can then be passed to the
-    constructor of the class *PrimitiveTree* to build an actual tree object.
-
-    :param pset: Primitive set from which primitives are selected.
+def generate(pset, min_, max_, condition, type_=__type__):
+    """Generate a Tree as a list of list. The tree is build
+    from the root to the leaves, and it stop growing when the
+    condition is fulfilled.
+    :param pset: A primitive set from wich to select primitives of the trees.
     :param min_: Minimum height of the produced trees.
     :param max_: Maximum Height of the produced trees.
     :param condition: The condition is a function that takes two arguments,
                       the height of the tree to build and the current
                       depth in the tree.
     :param type_: The type that should return the tree when called, when
-                  :obj:`None` (default) the type of :pset: (pset.ret)
-                  is assumed.
+                  :obj:`None` (default) no return type is enforced.
     :returns: A grown tree with leaves at possibly different depths
-              depending on the condition function.
+              dependending on the condition function.
+
+
+    DUMMY NODE ISSUES
+
+    DEAP will only place terminals if we're at the bottom of a branch.
+    This creates two issues:
+    1. A primitive that takes other primitives as inputs could be placed at the
+        second to last layer.
+        SOLUTION: You need to allow the tree to end whenever the height condition is
+                    met, so create "dummy" terminals for every type possible in the
+                    tree.
+    2. A primitive that takes terminals as inputs could be placed above the second to
+        last layer.
+        SOLUTION: You need to allow the tree to continue extending the branch until the
+                    height condition is met, so create "dummy" primitives that just pass
+                    through the terminal types.
+
+    These "dummy" terminals and "dummy" primitives introduce unnecessary and sometimes
+    nonsensical solutions into populations. These "dummy" nodes can be eliminated
+    if the height requirement is relaxed.
+
+
+    HOW TO PREVENT DUMMY NODE ISSUES
+
+    Relaxing the height requirement:
+    When at the bottom of the branch, check for terminals first, then primitives.
+        When checking for primitives, skirt the height requirement by adjusting
+        the branch depth to be the second to last layer of the tree.
+        If neither a terminal or primitive fits this node, then throw an error.
+    When not at the bottom of the branch, check for primitives first, then terminals.
+
+    Issue with relaxing the height requirement:
+    1. Endless loops are possible when primitive sets have any type loops.
+        A primitive with an output of one type may not take an input type of
+        itself or a parent type.
+        SOLUTION: A primitive set must be well-designed to prevent those type loops.
+
     """
     if type_ is None:
         type_ = pset.ret
@@ -631,34 +660,65 @@ def generate(pset, min_, max_, condition, type_=None):
     stack = [(0, type_)]
     while len(stack) != 0:
         depth, type_ = stack.pop()
+        # At the bottom of the tree
         if condition(height, depth):
+            # Try finding a terminal
             try:
                 term = random.choice(pset.terminals[type_])
+
+                if isclass(term):
+                    term = term()
+                expr.append(term)
+            # No terminal fits
             except IndexError:
-                _, _, traceback = sys.exc_info()
-                raise IndexError("The gp.generate function tried to add "
-                                 "a terminal of type '%s', but there is "
-                                 "none available." % (type_,)).with_traceback(traceback)
-            if type(term) is MetaEphemeral:
-                term = term()
-            expr.append(term)
+                # So pull the depth back one layer, and start looking for primitives
+                try:
+                    depth -= 1
+                    prim = random.choice(pset.primitives[type_])
+
+                    expr.append(prim)
+                    for arg in reversed(prim.args):
+                        stack.append((depth+1, arg))
+
+                # No primitive fits, either - that's an error
+                except IndexError:
+                    _, _, traceback = sys.exc_info()
+                    raise IndexError("The gp.generate function tried to add "
+                                     "a primitive of type '%s', but there is "
+                                     "none available." % (type_,), traceback)
+
+        # Not at the bottom of the tree
         else:
+            # Check for primitives
             try:
                 prim = random.choice(pset.primitives[type_])
+
+                expr.append(prim)
+                for arg in reversed(prim.args):
+                    stack.append((depth+1, arg))
+            # No primitive fits
             except IndexError:
-                _, _, traceback = sys.exc_info()
-                raise IndexError("The gp.generate function tried to add "
-                                 "a primitive of type '%s', but there is "
-                                 "none available." % (type_,)).with_traceback(traceback)
-            expr.append(prim)
-            for arg in reversed(prim.args):
-                stack.append((depth + 1, arg))
+                # So check for terminals
+                try:
+                    term = random.choice(pset.terminals[type_])
+
+                # No terminal fits, either - that's an error
+                except IndexError:
+                    _, _, traceback = sys.exc_info()
+                    raise IndexError("The gp.generate function tried to add "
+                                     "a terminal of type '%s', but there is "
+                                     "none available." % (type_,), traceback)
+                if isclass(term):
+                    term = term()
+                expr.append(term)
+
     return expr
 
 
 ######################################
 # GP Crossovers                      #
 ######################################
+
 
 def cxOnePoint(ind1, ind2):
     """Randomly select crossover point in each individual and exchange each
@@ -821,7 +881,7 @@ def mutEphemeral(individual, mode):
 
     if len(ephemerals_idx) > 0:
         if mode == "one":
-            ephemerals_idx = (random.choice(ephemerals_idx),)
+            ephemerals_idx = (random.choice(ephemerals_idx), )
 
         for i in ephemerals_idx:
             individual[i] = type(individual[i])()
@@ -854,7 +914,8 @@ def mutInsert(individual, pset):
 
     new_node = choice(primitives)
     new_subtree = [None] * len(new_node.args)
-    position = choice([i for i, a in enumerate(new_node.args) if a == node.ret])
+    position = choice(
+        [i for i, a in enumerate(new_node.args) if a == node.ret])
 
     for i, arg_type in enumerate(new_node.args):
         if i != position:
@@ -887,7 +948,8 @@ def mutShrink(individual):
 
     if len(iprims) != 0:
         index, prim = random.choice(iprims)
-        arg_idx = random.choice([i for i, type_ in enumerate(prim.args) if type_ == prim.ret])
+        arg_idx = random.choice(
+            [i for i, type_ in enumerate(prim.args) if type_ == prim.ret])
         rindex = index + 1
         for _ in range(arg_idx + 1):
             rslice = individual.searchSubtree(rindex)
@@ -933,7 +995,6 @@ def staticLimit(key, max_value):
         Cambridge, MA, 1992)
 
     """
-
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -953,9 +1014,21 @@ def staticLimit(key, max_value):
 # GP bloat control algorithms        #
 ######################################
 
-def harm(population, toolbox, cxpb, mutpb, ngen,
-         alpha, beta, gamma, rho, nbrindsmodel=-1, mincutoff=20,
-         stats=None, halloffame=None, verbose=__debug__):
+
+def harm(population,
+         toolbox,
+         cxpb,
+         mutpb,
+         ngen,
+         alpha,
+         beta,
+         gamma,
+         rho,
+         nbrindsmodel=-1,
+         mincutoff=20,
+         stats=None,
+         halloffame=None,
+         verbose=__debug__):
     """Implement bloat control on a GP evolution using HARM-GP, as defined in
     [Gardner2015]. It is implemented in the form of an evolution algorithm
     (similar to :func:`~deap.algorithms.eaSimple`).
@@ -1006,7 +1079,6 @@ def harm(population, toolbox, cxpb, mutpb, ngen,
         DOI 10.1007/s10710-015-9242-8
 
     """
-
     def _genpop(n, pickfrom=[], acceptfunc=lambda s: True, producesizes=False):
         # Generate a population of n individuals, using individuals in
         # *pickfrom* if possible, with a *acceptfunc* acceptance function.
@@ -1032,8 +1104,8 @@ def harm(population, toolbox, cxpb, mutpb, ngen,
                 opRandom = random.random()
                 if opRandom < cxpb:
                     # Crossover
-                    aspirant1, aspirant2 = toolbox.mate(*map(toolbox.clone,
-                                                             toolbox.select(population, 2)))
+                    aspirant1, aspirant2 = toolbox.mate(
+                        *map(toolbox.clone, toolbox.select(population, 2)))
                     del aspirant1.fitness.values, aspirant2.fitness.values
                     if acceptfunc(len(aspirant1)):
                         producedpop.append(aspirant1)
@@ -1099,7 +1171,9 @@ def harm(population, toolbox, cxpb, mutpb, ngen,
                 naturalhist[indsize - 2] += 0.1
 
         # Normalization
-        naturalhist = [val * len(population) / nbrindsmodel for val in naturalhist]
+        naturalhist = [
+            val * len(population) / nbrindsmodel for val in naturalhist
+        ]
 
         # Cutoff point selection
         sortednatural = sorted(naturalpop, key=lambda ind: ind.fitness)
@@ -1114,11 +1188,15 @@ def harm(population, toolbox, cxpb, mutpb, ngen,
                     / halflifefunc(x)) * math.exp(-math.log(2)
                                                   * (x - cutoffsize) / halflifefunc(x))
 
-        targethist = [naturalhist[binidx] if binidx <= cutoffsize else
-                      targetfunc(binidx) for binidx in range(len(naturalhist))]
+        targethist = [
+            naturalhist[binidx] if binidx <= cutoffsize else targetfunc(binidx)
+            for binidx in range(len(naturalhist))
+        ]
 
         # Compute the probabilities distribution
-        probhist = [t / n if n > 0 else t for n, t in zip(naturalhist, targethist)]
+        probhist = [
+            t / n if n > 0 else t for n, t in zip(naturalhist, targethist)
+        ]
 
         def probfunc(s):
             return probhist[s] if s < len(probhist) else targetfunc(s)
@@ -1128,8 +1206,10 @@ def harm(population, toolbox, cxpb, mutpb, ngen,
 
         # Generate offspring using the acceptance probabilities
         # previously computed
-        offspring = _genpop(len(population), pickfrom=naturalpop,
-                            acceptfunc=acceptfunc, producesizes=False)
+        offspring = _genpop(len(population),
+                            pickfrom=naturalpop,
+                            acceptfunc=acceptfunc,
+                            producesizes=False)
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
@@ -1230,14 +1310,23 @@ def graph(expr):
 # GSGP Mutation                      #
 ######################################
 
-def mutSemantic(individual, gen_func=genGrow, pset=None, ms=None, min=2, max=6):
+
+def mutSemantic(individual,
+                gen_func=genGrow,
+                pset=None,
+                ms=None,
+                min=2,
+                max=6):
     """
-    Implementation of the Semantic Mutation operator. [Geometric semantic genetic programming, Moraglio et al., 2012]
+    Implementation of the Semantic Mutation operator. [Geometric semantic genetic
+    programming, Moraglio et al., 2012]
     mutated_individual = individual + logistic * (random_tree1 - random_tree2)
 
     :param individual: individual to mutate
-    :param gen_func: function responsible for the generation of the random tree that will be used during the mutation
-    :param pset: Primitive Set, which contains terminal and operands to be used during the evolution
+    :param gen_func: function responsible for the generation of the random tree that
+    will be used during the mutation
+    :param pset: Primitive Set, which contains terminal and operands to be used during
+    the evolution
     :param ms: Mutation Step
     :param min: min depth of the random tree
     :param max: max depth of the random tree
@@ -1260,7 +1349,8 @@ def mutSemantic(individual, gen_func=genGrow, pset=None, ms=None, min=2, max=6):
         True
     """
     for p in ['lf', 'mul', 'add', 'sub']:
-        assert p in pset.mapping, "A '" + p + "' function is required in order to perform semantic mutation"
+        assert p in pset.mapping, "A '" + p + \
+            "' function is required in order to perform semantic mutation"
 
     tr1 = gen_func(pset, min, max)
     tr2 = gen_func(pset, min, max)
@@ -1287,14 +1377,17 @@ def mutSemantic(individual, gen_func=genGrow, pset=None, ms=None, min=2, max=6):
 
 def cxSemantic(ind1, ind2, gen_func=genGrow, pset=None, min=2, max=6):
     """
-    Implementation of the Semantic Crossover operator [Geometric semantic genetic programming, Moraglio et al., 2012]
+    Implementation of the Semantic Crossover operator [Geometric semantic genetic
+    programming, Moraglio et al., 2012]
     offspring1 = random_tree1 * ind1 + (1 - random_tree1) * ind2
     offspring2 = random_tree1 * ind2 + (1 - random_tree1) * ind1
 
     :param ind1: first parent
     :param ind2: second parent
-    :param gen_func: function responsible for the generation of the random tree that will be used during the mutation
-    :param pset: Primitive Set, which contains terminal and operands to be used during the evolution
+    :param gen_func: function responsible for the generation of the random tree that
+                     will be used during the mutation
+    :param pset: Primitive Set, which contains terminal and operands to be used during
+                 the evolution
     :param min: min depth of the random tree
     :param max: max depth of the random tree
     :return: offsprings
@@ -1320,7 +1413,8 @@ def cxSemantic(ind1, ind2, gen_func=genGrow, pset=None, min=2, max=6):
         True
     """
     for p in ['lf', 'mul', 'add', 'sub']:
-        assert p in pset.mapping, "A '" + p + "' function is required in order to perform semantic crossover"
+        assert p in pset.mapping, "A '" + p + \
+            "' function is required in order to perform semantic crossover"
 
     tr = gen_func(pset, min, max)
     tr.insert(0, pset.mapping['lf'])
