@@ -1,4 +1,5 @@
-import numpy
+import deap
+numpy = deap.np
 
 try:
     # try importing the C version

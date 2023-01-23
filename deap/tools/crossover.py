@@ -1,12 +1,12 @@
-import random
+from itertools import repeat
 import warnings
+import deap
+random = deap.rng
 
 try:
     from collections.abc import Sequence
 except ImportError:
     from collections import Sequence
-
-from itertools import repeat
 
 
 ######################################
@@ -314,11 +314,13 @@ def cxSimulatedBinaryBounded(ind1, ind2, eta, low, up):
     if not isinstance(low, Sequence):
         low = repeat(low, size)
     elif len(low) < size:
-        raise IndexError("low must be at least the size of the shorter individual: %d < %d" % (len(low), size))
+        raise IndexError(
+            "low must be at least the size of the shorter individual: %d < %d" % (len(low), size))
     if not isinstance(up, Sequence):
         up = repeat(up, size)
     elif len(up) < size:
-        raise IndexError("up must be at least the size of the shorter individual: %d < %d" % (len(up), size))
+        raise IndexError(
+            "up must be at least the size of the shorter individual: %d < %d" % (len(up), size))
 
     for i, xl, xu in zip(range(size), low, up):
         if random.random() <= 0.5:
