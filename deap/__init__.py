@@ -15,3 +15,10 @@
 __author__ = "DEAP Team"
 __version__ = "1.3"
 __revision__ = "1.3.3"
+
+import random
+import numpy as np
+
+rng = random
+rng.seed(42)
+np.random.seed(42)

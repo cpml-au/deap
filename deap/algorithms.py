@@ -25,9 +25,9 @@ You are encouraged to write your own algorithms in order to make them do what
 you really want them to do.
 """
 
-import random
-
 from . import tools
+import deap
+random = deap.rng
 
 
 def varAnd(population, toolbox, cxpb, mutpb):
@@ -227,10 +227,16 @@ def varOr(population, toolbox, lambda_, cxpb, mutpb):
         "or equal to 1.0.")
 
     offspring = []
+    s = random.getstate()
     for _ in range(lambda_):
+        # seems that saving and restoring the state is needed after each
+        # selection/crossover mutation for reproducibility
+        random.setstate(s)
         op_choice = random.random()
+        s = random.getstate()
         if op_choice < cxpb:            # Apply crossover
-            ind1, ind2 = [toolbox.clone(i) for i in random.sample(population, 2)]
+            ind1, ind2 = [toolbox.clone(i)
+                          for i in random.sample(population, 2)]
             ind1, ind2 = toolbox.mate(ind1, ind2)
             del ind1.fitness.values
             offspring.append(ind1)
