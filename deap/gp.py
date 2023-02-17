@@ -637,10 +637,16 @@ def generate(pset, min_, max_, condition, type_=__type__):
     """
     if type_ is None:
         type_ = pset.ret
+    in_type_ = type_
     expr = []
     height = random.randint(min_, max_)
     stack = [(0, type_)]
     while len(stack) != 0:
+        if len(expr) > 100:
+            expr = []
+            type_ = in_type_
+            height = random.randint(min_, max_)
+            stack = [(0, type_)]
         depth, type_ = stack.pop()
         # At the bottom of the tree
         if condition(height, depth):
