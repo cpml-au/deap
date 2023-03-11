@@ -539,7 +539,7 @@ def genFull(pset, min_, max_, type_=None):
         """Expression generation stops when the depth is equal to height."""
         return depth == height
 
-    return generate(pset, min_, max_, condition, type_)
+    return generate_with_args(pset, min_, max_, condition, type_)
 
 
 def genGrow(pset, min_, max_, type_=None):
@@ -561,7 +561,7 @@ def genGrow(pset, min_, max_, type_=None):
         return depth == height or \
             (depth >= min_ and random.random() < pset.terminalRatio)
 
-    return generate(pset, min_, max_, condition, type_)
+    return generate_with_args(pset, min_, max_, condition, type_)
 
 
 def genHalfAndHalf(pset, min_, max_, type_=None):
@@ -699,6 +699,23 @@ def generate(pset, min_, max_, condition, type_=__type__):
                 if isclass(term):
                     term = term()
                 expr.append(term)
+
+    return expr
+
+def generate_with_args(pset, min_, max_, condition, type_=__type__):
+    #NOTE: ADD DOCUMENTATION
+    args_list = pset.arguments
+    # rename args as original
+    args_list = ["ARG" + str(i) for i in range(len(pset.arguments))]
+    arg_check = False
+    while not arg_check:
+        expr = generate(pset, min_, max_, condition, type_)
+        # print([i.name for i in expr])
+        str_expr = [i.name for i in expr]
+        for i in args_list:
+            count = str_expr.count(i)
+            if count > 0:
+                arg_check = True
 
     return expr
 
