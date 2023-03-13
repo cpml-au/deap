@@ -523,7 +523,7 @@ def compileADF(expr, psets):
 ######################################
 # GP Program generation functions    #
 ######################################
-def genFull(pset, min_, max_, type_=None):
+def genFull(pset, min_, max_, type_=None, is_pop = False):
     """Generate an expression where each leaf has the same depth
     between *min* and *max*.
 
@@ -539,10 +539,13 @@ def genFull(pset, min_, max_, type_=None):
         """Expression generation stops when the depth is equal to height."""
         return depth == height
 
-    return generate_with_args(pset, min_, max_, condition, type_)
+    if is_pop:
+        return generate_with_args(pset, min_, max_, condition, type_)
+    
+    return generate(pset, min_, max_, condition, type_)
 
 
-def genGrow(pset, min_, max_, type_=None):
+def genGrow(pset, min_, max_, type_=None, is_pop = False):
     """Generate an expression where each leaf might have a different depth
     between *min* and *max*.
 
@@ -560,11 +563,13 @@ def genGrow(pset, min_, max_, type_=None):
         """
         return depth == height or \
             (depth >= min_ and random.random() < pset.terminalRatio)
+    if is_pop:
+        return generate_with_args(pset, min_, max_, condition, type_)
+    
+    return generate(pset, min_, max_, condition, type_)
 
-    return generate_with_args(pset, min_, max_, condition, type_)
 
-
-def genHalfAndHalf(pset, min_, max_, type_=None):
+def genHalfAndHalf(pset, min_, max_, type_=None, is_pop = False):
     """Generate an expression with a PrimitiveSet *pset*.
     Half the time, the expression is generated with :func:`~deap.gp.genGrow`,
     the other half, the expression is generated with :func:`~deap.gp.genFull`.
@@ -578,7 +583,7 @@ def genHalfAndHalf(pset, min_, max_, type_=None):
     :returns: Either, a full or a grown tree.
     """
     method = random.choice((genGrow, genFull))
-    return method(pset, min_, max_, type_)
+    return method(pset, min_, max_, type_, is_pop)
 
 # PATCH taken from https://gist.github.com/macrintr
 
@@ -718,7 +723,6 @@ def generate_with_args(pset, min_, max_, condition, type_=__type__):
                 arg_check = True
 
     return expr
-
 
 ######################################
 # GP Crossovers                      #
