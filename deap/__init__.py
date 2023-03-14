@@ -20,5 +20,5 @@ import random
 import numpy as np
 
 rng = random
-rng.seed(42)
-np.random.seed(42)
+# rng.seed(42)
+# np.random.seed(42)
