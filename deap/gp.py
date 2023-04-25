@@ -541,7 +541,7 @@ def compileADF(expr, psets):
 ######################################
 # GP Program generation functions    #
 ######################################
-def genFull(pset, min_, max_, type_=None, is_pop = False):
+def genFull(pset, min_, max_, type_=None, is_pop=False):
     """Generate an expression where each leaf has the same depth
     between *min* and *max*.
 
@@ -559,11 +559,11 @@ def genFull(pset, min_, max_, type_=None, is_pop = False):
 
     if is_pop:
         return generate_with_args(pset, min_, max_, condition, type_)
-    
+
     return generate(pset, min_, max_, condition, type_)
 
 
-def genGrow(pset, min_, max_, type_=None, is_pop = False):
+def genGrow(pset, min_, max_, type_=None, is_pop=False):
     """Generate an expression where each leaf might have a different depth
     between *min* and *max*.
 
@@ -583,11 +583,11 @@ def genGrow(pset, min_, max_, type_=None, is_pop = False):
             (depth >= min_ and random.random() < pset.terminalRatio)
     if is_pop:
         return generate_with_args(pset, min_, max_, condition, type_)
-    
+
     return generate(pset, min_, max_, condition, type_)
 
 
-def genHalfAndHalf(pset, min_, max_, type_=None, is_pop = False):
+def genHalfAndHalf(pset, min_, max_, type_=None, is_pop=False):
     """Generate an expression with a PrimitiveSet *pset*.
     Half the time, the expression is generated with :func:`~deap.gp.genGrow`,
     the other half, the expression is generated with :func:`~deap.gp.genFull`.
@@ -725,8 +725,9 @@ def generate(pset, min_, max_, condition, type_=__type__):
 
     return expr
 
+
 def generate_with_args(pset, min_, max_, condition, type_=__type__):
-    #NOTE: ADD DOCUMENTATION
+    # NOTE: ADD DOCUMENTATION
     args_list = pset.arguments
     # rename args as original
     args_list = ["ARG" + str(i) for i in range(len(pset.arguments))]
@@ -988,6 +989,18 @@ def mutShrink(individual):
 
     return individual,
 
+
+def mixedMutate(individual, expr, pset, prob):
+    """Implements a mixed mutation operator that randomly chooses among
+    mutUniform, mutNodeReplacement and mutShrink with given probabilities.
+    """
+    chosen_index = int(np.random.choice(range(3), 1, p=prob))
+    if chosen_index == 0:
+        return mutUniform(individual, expr, pset)
+    elif chosen_index == 1:
+        return mutNodeReplacement(individual, pset)
+    elif chosen_index == 2:
+        return mutShrink(individual)
 
 ######################################
 # GP bloat control decorators        #
