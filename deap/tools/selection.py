@@ -331,6 +331,29 @@ def selAutomaticEpsilonLexicase(individuals, k):
     return selected_individuals
 
 
+def selStochasticTournament(individuals, k, tournsize, prob,
+                            fit_attr="fitness"):
+    """Select the best individual among *tournsize* randomly chosen individuals, *k*
+    times. The list returned contains references to the input *individuals*.
+
+    Args:
+        individuals: A list of individuals to select from.
+        k: The number of individuals to select.
+        tournsize: The number of individuals participating in each tournament.
+        fit_attr: The attribute of individuals to use as selection criterion
+    Returns:
+        A list of selected individuals.
+    """
+    chosen = []
+    for _ in range(k):
+        aspirants = selRandom(individuals, tournsize)
+        aspirants.sort(key=attrgetter(fit_attr), reverse=True)
+        chosen_index = int(np.random.choice(range(tournsize), 1, p=prob))
+        chosen.append(aspirants[chosen_index])
+    return chosen
+
+
 __all__ = ['selRandom', 'selBest', 'selWorst', 'selRoulette',
            'selTournament', 'selDoubleTournament', 'selStochasticUniversalSampling',
-           'selLexicase', 'selEpsilonLexicase', 'selAutomaticEpsilonLexicase']
+           'selLexicase', 'selEpsilonLexicase', 'selAutomaticEpsilonLexicase', 
+           'selStochasticTournament']
