@@ -340,6 +340,7 @@ def selStochasticTournament(individuals, k, tournsize, prob,
         individuals: A list of individuals to select from.
         k: The number of individuals to select.
         tournsize: The number of individuals participating in each tournament.
+        prob: The probabilities of choosing each individual from individuals
         fit_attr: The attribute of individuals to use as selection criterion
     Returns:
         A list of selected individuals.
