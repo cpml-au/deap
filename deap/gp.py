@@ -27,6 +27,7 @@ import sys
 import types
 import warnings
 from inspect import isclass
+import numpy as np
 
 from collections import defaultdict, deque
 from functools import partial, wraps

@@ -189,7 +189,7 @@ def eaSimple(population, toolbox, cxpb, mutpb, ngen, stats=None,
     return population, logbook
 
 
-def varOr(population, toolbox, lambda_, cxpb, mutpb):
+def varOr(population, toolbox, lambda_, cxpb, mutpb, psets=None):
     r"""Part of an evolutionary algorithm applying only the variation part
     (crossover, mutation **or** reproduction). The modified individuals have
     their fitness invalidated. The individuals are cloned so returned
@@ -237,13 +237,23 @@ def varOr(population, toolbox, lambda_, cxpb, mutpb):
         if op_choice < cxpb:            # Apply crossover
             ind1, ind2 = [toolbox.clone(i)
                           for i in random.sample(population, 2)]
-            ind1, ind2 = toolbox.mate(ind1, ind2)
-            del ind1.fitness.values
+            for tree1, tree2 in zip(ind1, ind2):
+                toolbox.mate(tree1, tree2)
+                del ind1.fitness.values
+                del ind2.fitness.values
+
+            # ind1, ind2 = toolbox.mate(ind1, ind2)
+            # del ind1.fitness.values
             offspring.append(ind1)
         elif op_choice < cxpb + mutpb:  # Apply mutation
             ind = toolbox.clone(random.choice(population))
-            ind, = toolbox.mutate(ind)
-            del ind.fitness.values
+            if psets is not None:
+                for tree, pset in zip(ind, psets):
+                    toolbox.mutate(individual=tree, pset=pset)
+                    del ind.fitness.values
+            else:
+                ind, = toolbox.mutate(ind)
+                del ind.fitness.values
             offspring.append(ind)
         else:                           # Apply reproduction
             offspring.append(random.choice(population))
