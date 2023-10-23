@@ -240,12 +240,17 @@ def varOr(population, toolbox, lambda_, cxpb, mutpb, psets=None):
                           for i in random.sample(population, 2)]
             if psets is None:
                 ind1, ind2 = toolbox.mate(ind1, ind2)
-                del ind1.fitness.values
             else:
+                individuals = []
                 for tree1, tree2 in zip(ind1, ind2):
-                    tree1, tree2 = toolbox.mate(tree1, tree2)
-                    del ind1.fitness.values
-                    del ind2.fitness.values
+                    tree, _ = toolbox.mate(tree1, tree2)
+                    individuals.append(tree)
+
+                ind_MAIN = deap.creator.Tree(individuals[0])
+                ind_ADF = deap.creator.Tree(individuals[1])
+                ind1 = deap.creator.Individual([ind_MAIN, ind_ADF])
+            del ind1.fitness.values
+            del ind2.fitness.values
 
             offspring.append(ind1)
 
@@ -255,9 +260,14 @@ def varOr(population, toolbox, lambda_, cxpb, mutpb, psets=None):
             if psets is None:
                 ind, = toolbox.mutate(ind)
             else:
+                individuals = []
                 for tree, pset in zip(ind, psets):
                     tree, = toolbox.mutate(individual=tree, pset=pset)
+                    individuals.append(tree)
 
+                ind_MAIN = deap.creator.Tree(individuals[0])
+                ind_ADF = deap.creator.Tree(individuals[1])
+                ind = deap.creator.Individual([ind_MAIN, ind_ADF])
             del ind.fitness.values
             offspring.append(ind)
 
