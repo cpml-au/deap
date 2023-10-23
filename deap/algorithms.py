@@ -234,28 +234,35 @@ def varOr(population, toolbox, lambda_, cxpb, mutpb, psets=None):
         random.setstate(s)
         op_choice = random.random()
         s = random.getstate()
-        if op_choice < cxpb:            # Apply crossover
+        # Apply crossover
+        if op_choice < cxpb:
             ind1, ind2 = [toolbox.clone(i)
                           for i in random.sample(population, 2)]
-            for tree1, tree2 in zip(ind1, ind2):
-                toolbox.mate(tree1, tree2)
+            if psets is None:
+                ind1, ind2 = toolbox.mate(ind1, ind2)
                 del ind1.fitness.values
-                del ind2.fitness.values
-
-            # ind1, ind2 = toolbox.mate(ind1, ind2)
-            # del ind1.fitness.values
-            offspring.append(ind1)
-        elif op_choice < cxpb + mutpb:  # Apply mutation
-            ind = toolbox.clone(random.choice(population))
-            if psets is not None:
-                for tree, pset in zip(ind, psets):
-                    toolbox.mutate(individual=tree, pset=pset)
-                    del ind.fitness.values
             else:
+                for tree1, tree2 in zip(ind1, ind2):
+                    tree1, tree2 = toolbox.mate(tree1, tree2)
+                    del ind1.fitness.values
+                    del ind2.fitness.values
+
+            offspring.append(ind1)
+
+        # Apply mutation
+        elif op_choice < cxpb + mutpb:
+            ind = toolbox.clone(random.choice(population))
+            if psets is None:
                 ind, = toolbox.mutate(ind)
-                del ind.fitness.values
+            else:
+                for tree, pset in zip(ind, psets):
+                    tree, = toolbox.mutate(individual=tree, pset=pset)
+
+            del ind.fitness.values
             offspring.append(ind)
-        else:                           # Apply reproduction
+
+        # Apply reproduction
+        else:
             offspring.append(random.choice(population))
 
     return offspring
