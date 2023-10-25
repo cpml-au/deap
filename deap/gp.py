@@ -532,7 +532,8 @@ def compileADF(expr, psets):
     """
     adfdict = {}
     func = None
-    for pset, subexpr in reversed(list(zip(psets, expr))):
+    psets_copy = copy.deepcopy(psets)
+    for pset, subexpr in reversed(list(zip(psets_copy, expr))):
         pset.context.update(adfdict)
         func = compile(subexpr, pset)
         adfdict.update({pset.name: func})
