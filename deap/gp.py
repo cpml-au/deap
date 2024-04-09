@@ -485,7 +485,7 @@ class PrimitiveSet(PrimitiveSetTyped):
 ######################################
 # GP Tree compilation functions      #
 ######################################
-def compile(expr, pset):
+def compile(expr, pset, extra_args=[]):
     """Compile the expression *expr*.
 
     :param expr: Expression to compile. It can either be a PrimitiveTree,
@@ -500,7 +500,7 @@ def compile(expr, pset):
     if len(pset.arguments) > 0:
         # This section is a stripped version of the lambdify
         # function of SymPy 0.6.6.
-        args = ",".join(arg for arg in pset.arguments)
+        args = ",".join(arg for arg in pset.arguments + extra_args)
         code = "lambda {args}: {code}".format(args=args, code=code)
     try:
         return eval(code, pset.context, {})

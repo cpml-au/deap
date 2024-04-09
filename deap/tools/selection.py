@@ -274,9 +274,11 @@ def selEpsilonLexicase(individuals, k, epsilon):
                 best_val_for_case = max(
                     x.fitness.values[cases[0]] for x in candidates)
                 min_val_to_survive_case = best_val_for_case - epsilon
-                candidates = [x for x in candidates if x.fitness.values[cases[0]] >= min_val_to_survive_case]
+                candidates = [
+                    x for x in candidates if x.fitness.values[cases[0]] >= min_val_to_survive_case]
             else:
-                best_val_for_case = min(x.fitness.values[cases[0]] for x in candidates)
+                best_val_for_case = min(
+                    x.fitness.values[cases[0]] for x in candidates)
                 max_val_to_survive_case = best_val_for_case + epsilon
                 candidates = [
                     x for x in candidates if x.fitness.values[cases[0]] <= max_val_to_survive_case]
@@ -317,7 +319,8 @@ def selAutomaticEpsilonLexicase(individuals, k):
             if fit_weights[cases[0]] > 0:
                 best_val_for_case = max(errors_for_this_case)
                 min_val_to_survive = best_val_for_case - median_absolute_deviation
-                candidates = [x for x in candidates if x.fitness.values[cases[0]] >= min_val_to_survive]
+                candidates = [
+                    x for x in candidates if x.fitness.values[cases[0]] >= min_val_to_survive]
             else:
                 best_val_for_case = min(errors_for_this_case)
                 max_val_to_survive = best_val_for_case + median_absolute_deviation
@@ -354,7 +357,32 @@ def selStochasticTournament(individuals, k, tournsize, prob,
     return chosen
 
 
+def tournament_with_elitism(individuals, num_elitist=0, tournsize=2,
+                            stochastic_tourn={'enabled': False,
+                                              'prob': [1., 0.]}):
+    """Perform tournament selection with elitism.
+
+    Args:
+        individuals: a list of individuals to select from.
+
+    Returns:
+        population after selection.
+    """
+    n_tournament = len(individuals) - num_elitist
+
+    bestind = selBest(individuals, num_elitist)
+
+    if stochastic_tourn['enabled']:
+        return bestind + selStochasticTournament(individuals, n_tournament,
+                                                 tournsize=tournsize,
+                                                 prob=stochastic_tourn['prob']
+                                                 )
+    else:
+        return bestind + selTournament(individuals, n_tournament,
+                                       tournsize=tournsize)
+
+
 __all__ = ['selRandom', 'selBest', 'selWorst', 'selRoulette',
            'selTournament', 'selDoubleTournament', 'selStochasticUniversalSampling',
-           'selLexicase', 'selEpsilonLexicase', 'selAutomaticEpsilonLexicase', 
-           'selStochasticTournament']
+           'selLexicase', 'selEpsilonLexicase', 'selAutomaticEpsilonLexicase',
+           'selStochasticTournament', 'tournament_with_elitism']
