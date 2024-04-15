@@ -303,7 +303,11 @@ class PrimitiveSetTyped(object):
         # setting "__builtins__" to None avoid the context
         # being polluted by builtins function when evaluating
         # GP expression.
-        self.context = {"__builtins__": None}
+        # self.context = {"__builtins__": None}
+        # NOTE: we changed the original code of DEAP here, otherwise we get
+        # a NoneType error when trying to evaluate functions that contain
+        # JAX primitives.
+        self.context = {}
         self.mapping = dict()
         self.terms_count = 0
         self.prims_count = 0
