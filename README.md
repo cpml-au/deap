@@ -51,10 +51,10 @@ The latest version can be installed with
 pip install git+https://github.com/DEAP/deap@master
 ```
 
-If you wish to build from sources, download or clone the repository and type
+If you wish to build from sources, download or clone the repository and type the following inside the directory.
 
 ```bash
-python setup.py install
+pip install -e .
 ```
 
 ## Build Status
