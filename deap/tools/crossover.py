@@ -1,6 +1,5 @@
 from itertools import repeat
 import warnings
-import deap
 import random
 
 try:

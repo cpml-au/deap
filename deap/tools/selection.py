@@ -1,10 +1,7 @@
 from operator import attrgetter
 from functools import partial
-import deap
 import random
-
-np = deap.np
-
+import numpy as np
 
 ######################################
 # Selections                         #

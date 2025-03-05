@@ -1,5 +1,4 @@
-import deap
-numpy = deap.np
+import numpy as np
 
 try:
     # try importing the C version
@@ -16,21 +15,21 @@ def hypervolume(front, **kargs):
     """
     # Must use wvalues * -1 since hypervolume use implicit minimization
     # And minimization in deap use max on -obj
-    wobj = numpy.array([ind.fitness.wvalues for ind in front]) * -1
+    wobj = np.array([ind.fitness.wvalues for ind in front]) * -1
     ref = kargs.get("ref", None)
     if ref is None:
-        ref = numpy.max(wobj, axis=0) + 1
+        ref = np.max(wobj, axis=0) + 1
 
     def contribution(i):
         # The contribution of point p_i in point set P
         # is the hypervolume of P without p_i
-        return hv.hypervolume(numpy.concatenate((wobj[:i], wobj[i + 1:])), ref)
+        return hv.hypervolume(np.concatenate((wobj[:i], wobj[i + 1 :])), ref)
 
     # Parallelization note: Cannot pickle local function
     contrib_values = [contribution(i) for i in range(len(front))]
 
     # Select the maximum hypervolume value (correspond to the minimum difference)
-    return numpy.argmax(contrib_values)
+    return np.argmax(contrib_values)
 
 
 __all__ = ["hypervolume"]
