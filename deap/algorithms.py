@@ -27,7 +27,7 @@ you really want them to do.
 
 from . import tools
 import deap
-random = deap.rng
+import random
 
 
 def varAnd(population, toolbox, cxpb, mutpb):
@@ -70,20 +70,29 @@ def varAnd(population, toolbox, cxpb, mutpb):
     # Apply crossover and mutation on the offspring
     for i in range(1, len(offspring), 2):
         if random.random() < cxpb:
-            offspring[i - 1], offspring[i] = toolbox.mate(offspring[i - 1],
-                                                          offspring[i])
+            offspring[i - 1], offspring[i] = toolbox.mate(
+                offspring[i - 1], offspring[i]
+            )
             del offspring[i - 1].fitness.values, offspring[i].fitness.values
 
     for i in range(len(offspring)):
         if random.random() < mutpb:
-            offspring[i], = toolbox.mutate(offspring[i])
+            (offspring[i],) = toolbox.mutate(offspring[i])
             del offspring[i].fitness.values
 
     return offspring
 
 
-def eaSimple(population, toolbox, cxpb, mutpb, ngen, stats=None,
-             halloffame=None, verbose=__debug__):
+def eaSimple(
+    population,
+    toolbox,
+    cxpb,
+    mutpb,
+    ngen,
+    stats=None,
+    halloffame=None,
+    verbose=__debug__,
+):
     """This algorithm reproduce the simplest evolutionary algorithm as
     presented in chapter 7 of [Back2000]_.
 
@@ -143,7 +152,7 @@ def eaSimple(population, toolbox, cxpb, mutpb, ngen, stats=None,
        Basic Algorithms and Operators", 2000.
     """
     logbook = tools.Logbook()
-    logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
+    logbook.header = ["gen", "nevals"] + (stats.fields if stats else [])
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
@@ -224,7 +233,8 @@ def varOr(population, toolbox, lambda_, cxpb, mutpb, psets=None):
     """
     assert (cxpb + mutpb) <= 1.0, (
         "The sum of the crossover and mutation probabilities must be smaller "
-        "or equal to 1.0.")
+        "or equal to 1.0."
+    )
 
     offspring = []
     s = random.getstate()
@@ -236,8 +246,7 @@ def varOr(population, toolbox, lambda_, cxpb, mutpb, psets=None):
         s = random.getstate()
         # Apply crossover
         if op_choice < cxpb:
-            ind1, ind2 = [toolbox.clone(i)
-                          for i in random.sample(population, 2)]
+            ind1, ind2 = [toolbox.clone(i) for i in random.sample(population, 2)]
             if psets is None:
                 ind1, ind2 = toolbox.mate(ind1, ind2)
             else:
@@ -258,11 +267,11 @@ def varOr(population, toolbox, lambda_, cxpb, mutpb, psets=None):
         elif op_choice < cxpb + mutpb:
             ind = toolbox.clone(random.choice(population))
             if psets is None:
-                ind, = toolbox.mutate(ind)
+                (ind,) = toolbox.mutate(ind)
             else:
                 trees = []
                 for tree, pset in zip(ind, psets):
-                    tree, = toolbox.mutate(individual=tree, pset=pset)
+                    (tree,) = toolbox.mutate(individual=tree, pset=pset)
                     trees.append(tree)
 
                 ind_MAIN = deap.creator.Tree(trees[0])
@@ -278,8 +287,18 @@ def varOr(population, toolbox, lambda_, cxpb, mutpb, psets=None):
     return offspring
 
 
-def eaMuPlusLambda(population, toolbox, mu, lambda_, cxpb, mutpb, ngen,
-                   stats=None, halloffame=None, verbose=__debug__):
+def eaMuPlusLambda(
+    population,
+    toolbox,
+    mu,
+    lambda_,
+    cxpb,
+    mutpb,
+    ngen,
+    stats=None,
+    halloffame=None,
+    verbose=__debug__,
+):
     r"""This is the :math:`(\mu + \lambda)` evolutionary algorithm.
 
     :param population: A list of individuals.
@@ -327,7 +346,7 @@ def eaMuPlusLambda(population, toolbox, mu, lambda_, cxpb, mutpb, ngen,
     variation.
     """
     logbook = tools.Logbook()
-    logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
+    logbook.header = ["gen", "nevals"] + (stats.fields if stats else [])
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
@@ -370,8 +389,18 @@ def eaMuPlusLambda(population, toolbox, mu, lambda_, cxpb, mutpb, ngen,
     return population, logbook
 
 
-def eaMuCommaLambda(population, toolbox, mu, lambda_, cxpb, mutpb, ngen,
-                    stats=None, halloffame=None, verbose=__debug__):
+def eaMuCommaLambda(
+    population,
+    toolbox,
+    mu,
+    lambda_,
+    cxpb,
+    mutpb,
+    ngen,
+    stats=None,
+    halloffame=None,
+    verbose=__debug__,
+):
     r"""This is the :math:`(\mu~,~\lambda)` evolutionary algorithm.
 
     :param population: A list of individuals.
@@ -437,7 +466,7 @@ def eaMuCommaLambda(population, toolbox, mu, lambda_, cxpb, mutpb, ngen,
         halloffame.update(population)
 
     logbook = tools.Logbook()
-    logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
+    logbook.header = ["gen", "nevals"] + (stats.fields if stats else [])
 
     record = stats.compile(population) if stats is not None else {}
     logbook.record(gen=0, nevals=len(invalid_ind), **record)
@@ -470,8 +499,7 @@ def eaMuCommaLambda(population, toolbox, mu, lambda_, cxpb, mutpb, ngen,
     return population, logbook
 
 
-def eaGenerateUpdate(toolbox, ngen, halloffame=None, stats=None,
-                     verbose=__debug__):
+def eaGenerateUpdate(toolbox, ngen, halloffame=None, stats=None, verbose=__debug__):
     """This is algorithm implements the ask-tell model proposed in
     [Colette2010]_, where ask is called `generate` and tell is called `update`.
 
@@ -512,7 +540,7 @@ def eaGenerateUpdate(toolbox, ngen, halloffame=None, stats=None,
 
     """
     logbook = tools.Logbook()
-    logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
+    logbook.header = ["gen", "nevals"] + (stats.fields if stats else [])
 
     for gen in range(ngen):
         # Generate a new population

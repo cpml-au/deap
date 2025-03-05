@@ -34,9 +34,6 @@ from functools import partial, wraps
 from operator import eq, lt
 
 from . import tools  # Needed by HARM-GP
-import deap
-
-random = deap.rng
 
 ######################################
 # GP Data structure                  #
@@ -75,8 +72,9 @@ class PrimitiveTree(list):
                     " in a tree of size %d). Even if this is allowed by the"
                     " list object slice setter, this should not be done in"
                     " the PrimitiveTree context, as this may lead to an"
-                    " unpredictable behavior for searchSubtree or evaluate." %
-                    (key, len(self)))
+                    " unpredictable behavior for searchSubtree or evaluate."
+                    % (key, len(self))
+                )
             total = val[0].arity
             for node in val[1:]:
                 total += node.arity - 1
@@ -88,15 +86,16 @@ class PrimitiveTree(list):
                     " be mapped to any position in the tree, considering the"
                     " primitives' arity. For instance, the tree [sub, 4, 5,"
                     " 6] is incomplete if the arity of sub is 2, because it"
-                    " would produce an orphan node (the 6).")
+                    " would produce an orphan node (the 6)."
+                )
         elif val.arity != self[key].arity:
-            raise ValueError("Invalid node replacement with a node of a"
-                             " different arity.")
+            raise ValueError(
+                "Invalid node replacement with a node of a" " different arity."
+            )
         list.__setitem__(self, key, val)
 
     def __str__(self):
-        """Return the expression in a human readable string.
-        """
+        """Return the expression in a human readable string."""
         string = ""
         stack = []
         for node in self:
@@ -124,7 +123,7 @@ class PrimitiveTree(list):
         expr = []
         ret_types = deque()
         for token in tokens:
-            if token == '':
+            if token == "":
                 continue
             if len(ret_types) != 0:
                 type_ = ret_types.popleft()
@@ -135,9 +134,12 @@ class PrimitiveTree(list):
                 primitive = pset.mapping[token]
 
                 if type_ is not None and not issubclass(primitive.ret, type_):
-                    raise TypeError("Primitive {} return type {} does not "
-                                    "match the expected one: {}.".format(
-                                        primitive, primitive.ret, type_))
+                    raise TypeError(
+                        "Primitive {} return type {} does not "
+                        "match the expected one: {}.".format(
+                            primitive, primitive.ret, type_
+                        )
+                    )
 
                 expr.append(primitive)
                 if isinstance(primitive, Primitive):
@@ -146,16 +148,16 @@ class PrimitiveTree(list):
                 try:
                     token = eval(token)
                 except NameError:
-                    raise TypeError(
-                        "Unable to evaluate terminal: {}.".format(token))
+                    raise TypeError("Unable to evaluate terminal: {}.".format(token))
 
                 if type_ is None:
                     type_ = type(token)
 
                 if not issubclass(type(token), type_):
-                    raise TypeError("Terminal {} type {} does not "
-                                    "match the expected one: {}.".format(
-                                        token, type(token), type_))
+                    raise TypeError(
+                        "Terminal {} type {} does not "
+                        "match the expected one: {}.".format(token, type(token), type_)
+                    )
 
                 expr.append(Terminal(token, False, type_))
         return cls(expr)
@@ -175,8 +177,7 @@ class PrimitiveTree(list):
 
     @property
     def root(self):
-        """Root of the tree, the element 0 of the list.
-        """
+        """Root of the tree, the element 0 of the list."""
         return self[0]
 
     def searchSubtree(self, begin):
@@ -200,7 +201,8 @@ class Primitive(object):
         >>> pr.format(1, 2)
         'mul(1, 2)'
     """
-    __slots__ = ('name', 'arity', 'args', 'ret', 'seq')
+
+    __slots__ = ("name", "arity", "args", "ret", "seq")
 
     def __init__(self, name, args, ret):
         self.name = name
@@ -216,8 +218,8 @@ class Primitive(object):
     def __eq__(self, other):
         if type(self) is type(other):
             return all(
-                getattr(self, slot) == getattr(other, slot)
-                for slot in self.__slots__)
+                getattr(self, slot) == getattr(other, slot) for slot in self.__slots__
+            )
         else:
             return NotImplemented
 
@@ -226,7 +228,8 @@ class Terminal(object):
     """Class that encapsulates terminal primitive in expression. Terminals can
     be values or 0-arity functions.
     """
-    __slots__ = ('name', 'value', 'ret', 'conv_fct')
+
+    __slots__ = ("name", "value", "ret", "conv_fct")
 
     def __init__(self, terminal, symbolic, ret):
         self.ret = ret
@@ -244,8 +247,8 @@ class Terminal(object):
     def __eq__(self, other):
         if type(self) is type(other):
             return all(
-                getattr(self, slot) == getattr(other, slot)
-                for slot in self.__slots__)
+                getattr(self, slot) == getattr(other, slot) for slot in self.__slots__
+            )
         else:
             return NotImplemented
 
@@ -255,26 +258,32 @@ class MetaEphemeral(type):
     object is created. To mutate the value, a new object has to be
     generated.
     """
+
     cache = {}
 
     def __new__(meta, name, func, ret=__type__, id_=None):
         if id_ in MetaEphemeral.cache:
             return MetaEphemeral.cache[id_]
 
-        if isinstance(func, types.LambdaType) and func.__name__ == '<lambda>':
-            warnings.warn("Ephemeral {name} function cannot be "
-                          "pickled because its generating function "
-                          "is a lambda function. Use functools.partial "
-                          "instead.".format(name=name), RuntimeWarning)
+        if isinstance(func, types.LambdaType) and func.__name__ == "<lambda>":
+            warnings.warn(
+                "Ephemeral {name} function cannot be "
+                "pickled because its generating function "
+                "is a lambda function. Use functools.partial "
+                "instead.".format(name=name),
+                RuntimeWarning,
+            )
 
         def __init__(self):
             self.value = func()
 
-        attr = {'__init__': __init__,
-                'name': name,
-                'func': func,
-                'ret': ret,
-                'conv_fct': repr}
+        attr = {
+            "__init__": __init__,
+            "name": name,
+            "func": func,
+            "ret": ret,
+            "conv_fct": repr,
+        }
 
         cls = super(MetaEphemeral, meta).__new__(meta, name, (Terminal,), attr)
         MetaEphemeral.cache[id(cls)] = cls
@@ -323,8 +332,7 @@ class PrimitiveSetTyped(object):
             self.terms_count += 1
 
     def renameArguments(self, **kargs):
-        """Rename function arguments with new names from *kargs*.
-        """
+        """Rename function arguments with new names from *kargs*."""
         for i, old_name in enumerate(self.arguments):
             if old_name in kargs:
                 new_name = kargs[old_name]
@@ -373,11 +381,11 @@ class PrimitiveSetTyped(object):
             name = primitive.__name__
         prim = Primitive(name, in_types, ret_type)
 
-        assert name not in self.context or \
-            self.context[name] is primitive, \
-            "Primitives are required to have a unique name. " \
-            "Consider using the argument 'name' to rename your " \
+        assert name not in self.context or self.context[name] is primitive, (
+            "Primitives are required to have a unique name. "
+            "Consider using the argument 'name' to rename your "
             "second '%s' primitive." % (name,)
+        )
 
         self._add(prim)
         self.context[prim.name] = primitive
@@ -400,10 +408,11 @@ class PrimitiveSetTyped(object):
         if name is None and callable(terminal):
             name = terminal.__name__
 
-        assert name not in self.context, \
-            "Terminals are required to have a unique name. " \
-            "Consider using the argument 'name' to rename your " \
+        assert name not in self.context, (
+            "Terminals are required to have a unique name. "
+            "Consider using the argument 'name' to rename your "
             "second %s terminal." % (name,)
+        )
 
         if name is not None:
             self.context[name] = terminal
@@ -432,11 +441,15 @@ class PrimitiveSetTyped(object):
         else:
             class_ = self.mapping[name]
             if class_.func is not ephemeral:
-                raise Exception("Ephemerals with different functions should "
-                                "be named differently, even between psets.")
+                raise Exception(
+                    "Ephemerals with different functions should "
+                    "be named differently, even between psets."
+                )
             if class_.ret is not ret_type:
-                raise Exception("Ephemerals with the same name and function "
-                                "should have the same type, even between psets.")
+                raise Exception(
+                    "Ephemerals with the same name and function "
+                    "should have the same type, even between psets."
+                )
 
         self._add(class_)
         self.terms_count += 1
@@ -510,11 +523,13 @@ def compile(expr, pset, extra_args=[]):
         return eval(code, pset.context, {})
     except MemoryError:
         _, _, traceback = sys.exc_info()
-        raise MemoryError("DEAP : Error in tree evaluation :"
-                          " Python cannot evaluate a tree higher than 90. "
-                          "To avoid this problem, you should use bloat control on your "
-                          "operators. See the DEAP documentation for more information. "
-                          "DEAP will now abort.").with_traceback(traceback)
+        raise MemoryError(
+            "DEAP : Error in tree evaluation :"
+            " Python cannot evaluate a tree higher than 90. "
+            "To avoid this problem, you should use bloat control on your "
+            "operators. See the DEAP documentation for more information. "
+            "DEAP will now abort."
+        ).with_traceback(traceback)
 
 
 def compileADF(expr, psets):
@@ -559,6 +574,7 @@ def genFull(pset, min_, max_, type_=None, is_pop=False):
                   is assumed.
     :returns: A full tree with all leaves at the same depth.
     """
+
     def condition(height, depth):
         """Expression generation stops when the depth is equal to height."""
         return depth == height
@@ -581,12 +597,15 @@ def genGrow(pset, min_, max_, type_=None, is_pop=False):
                   is assumed.
     :returns: A grown tree with leaves at possibly different depths.
     """
+
     def condition(height, depth):
         """Expression generation stops when the depth is equal to height
         or when it is randomly determined that a node should be a terminal.
         """
-        return depth == height or \
-            (depth >= min_ and random.random() < pset.terminalRatio)
+        return depth == height or (
+            depth >= min_ and random.random() < pset.terminalRatio
+        )
+
     if is_pop:
         return generate_with_args(pset, min_, max_, condition, type_)
 
@@ -608,6 +627,7 @@ def genHalfAndHalf(pset, min_, max_, type_=None, is_pop=False):
     """
     method = random.choice((genGrow, genFull))
     return method(pset, min_, max_, type_, is_pop)
+
 
 # PATCH taken from https://gist.github.com/macrintr
 
@@ -695,14 +715,17 @@ def generate(pset, min_, max_, condition, type_=__type__):
 
                     expr.append(prim)
                     for arg in reversed(prim.args):
-                        stack.append((depth+1, arg))
+                        stack.append((depth + 1, arg))
 
                 # No primitive fits, either - that's an error
                 except IndexError:
                     _, _, traceback = sys.exc_info()
-                    raise IndexError("The gp.generate function tried to add "
-                                     "a primitive of type '%s', but there is "
-                                     "none available." % (type_,), traceback)
+                    raise IndexError(
+                        "The gp.generate function tried to add "
+                        "a primitive of type '%s', but there is "
+                        "none available." % (type_,),
+                        traceback,
+                    )
 
         # Not at the bottom of the tree
         else:
@@ -712,7 +735,7 @@ def generate(pset, min_, max_, condition, type_=__type__):
 
                 expr.append(prim)
                 for arg in reversed(prim.args):
-                    stack.append((depth+1, arg))
+                    stack.append((depth + 1, arg))
             # No primitive fits
             except IndexError:
                 # So check for terminals
@@ -722,9 +745,12 @@ def generate(pset, min_, max_, condition, type_=__type__):
                 # No terminal fits, either - that's an error
                 except IndexError:
                     _, _, traceback = sys.exc_info()
-                    raise IndexError("The gp.generate function tried to add "
-                                     "a terminal of type '%s', but there is "
-                                     "none available." % (type_,), traceback)
+                    raise IndexError(
+                        "The gp.generate function tried to add "
+                        "a terminal of type '%s', but there is "
+                        "none available." % (type_,),
+                        traceback,
+                    )
                 if isclass(term):
                     term = term()
                 expr.append(term)
@@ -748,6 +774,7 @@ def generate_with_args(pset, min_, max_, condition, type_=__type__):
                 arg_check = True
 
     return expr
+
 
 ######################################
 # GP Crossovers                      #
@@ -866,7 +893,7 @@ def mutUniform(individual, expr, pset):
     slice_ = individual.searchSubtree(index)
     type_ = individual[index].ret
     individual[slice_] = expr(pset=pset, type_=type_)
-    return individual,
+    return (individual,)
 
 
 def mutNodeReplacement(individual, pset):
@@ -878,7 +905,7 @@ def mutNodeReplacement(individual, pset):
     :returns: A tuple of one tree.
     """
     if len(individual) < 2:
-        return individual,
+        return (individual,)
 
     index = random.randrange(1, len(individual))
     node = individual[index]
@@ -892,7 +919,7 @@ def mutNodeReplacement(individual, pset):
         prims = [p for p in pset.primitives[node.ret] if p.args == node.args]
         individual[index] = random.choice(prims)
 
-    return individual,
+    return (individual,)
 
 
 def mutEphemeral(individual, mode):
@@ -907,20 +934,22 @@ def mutEphemeral(individual, mode):
     :returns: A tuple of one tree.
     """
     if mode not in ["one", "all"]:
-        raise ValueError("Mode must be one of \"one\" or \"all\"")
+        raise ValueError('Mode must be one of "one" or "all"')
 
-    ephemerals_idx = [index
-                      for index, node in enumerate(individual)
-                      if isinstance(type(node), MetaEphemeral)]
+    ephemerals_idx = [
+        index
+        for index, node in enumerate(individual)
+        if isinstance(type(node), MetaEphemeral)
+    ]
 
     if len(ephemerals_idx) > 0:
         if mode == "one":
-            ephemerals_idx = (random.choice(ephemerals_idx), )
+            ephemerals_idx = (random.choice(ephemerals_idx),)
 
         for i in ephemerals_idx:
             individual[i] = type(individual[i])()
 
-    return individual,
+    return (individual,)
 
 
 def mutInsert(individual, pset):
@@ -944,12 +973,11 @@ def mutInsert(individual, pset):
     primitives = [p for p in pset.primitives[node.ret] if node.ret in p.args]
 
     if len(primitives) == 0:
-        return individual,
+        return (individual,)
 
     new_node = choice(primitives)
     new_subtree = [None] * len(new_node.args)
-    position = choice(
-        [i for i, a in enumerate(new_node.args) if a == node.ret])
+    position = choice([i for i, a in enumerate(new_node.args) if a == node.ret])
 
     for i, arg_type in enumerate(new_node.args):
         if i != position:
@@ -958,10 +986,10 @@ def mutInsert(individual, pset):
                 term = term()
             new_subtree[i] = term
 
-    new_subtree[position:position + 1] = individual[slice_]
+    new_subtree[position : position + 1] = individual[slice_]
     new_subtree.insert(0, new_node)
     individual[slice_] = new_subtree
-    return individual,
+    return (individual,)
 
 
 def mutShrink(individual):
@@ -973,7 +1001,7 @@ def mutShrink(individual):
     """
     # We don't want to "shrink" the root
     if len(individual) < 3 or individual.height <= 1:
-        return individual,
+        return (individual,)
 
     iprims = []
     for i, node in enumerate(individual[1:], 1):
@@ -983,7 +1011,8 @@ def mutShrink(individual):
     if len(iprims) != 0:
         index, prim = random.choice(iprims)
         arg_idx = random.choice(
-            [i for i, type_ in enumerate(prim.args) if type_ == prim.ret])
+            [i for i, type_ in enumerate(prim.args) if type_ == prim.ret]
+        )
         rindex = index + 1
         for _ in range(arg_idx + 1):
             rslice = individual.searchSubtree(rindex)
@@ -993,7 +1022,7 @@ def mutShrink(individual):
         slice_ = individual.searchSubtree(index)
         individual[slice_] = subtree
 
-    return individual,
+    return (individual,)
 
 
 def mixedMutate(individual, expr, pset, prob):
@@ -1007,6 +1036,7 @@ def mixedMutate(individual, expr, pset, prob):
         return mutNodeReplacement(individual, pset)
     elif chosen_index == 2:
         return mutShrink(individual)
+
 
 ######################################
 # GP bloat control decorators        #
@@ -1041,6 +1071,7 @@ def staticLimit(key, max_value):
         Cambridge, MA, 1992)
 
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -1061,20 +1092,22 @@ def staticLimit(key, max_value):
 ######################################
 
 
-def harm(population,
-         toolbox,
-         cxpb,
-         mutpb,
-         ngen,
-         alpha,
-         beta,
-         gamma,
-         rho,
-         nbrindsmodel=-1,
-         mincutoff=20,
-         stats=None,
-         halloffame=None,
-         verbose=__debug__):
+def harm(
+    population,
+    toolbox,
+    cxpb,
+    mutpb,
+    ngen,
+    alpha,
+    beta,
+    gamma,
+    rho,
+    nbrindsmodel=-1,
+    mincutoff=20,
+    stats=None,
+    halloffame=None,
+    verbose=__debug__,
+):
     """Implement bloat control on a GP evolution using HARM-GP, as defined in
     [Gardner2015]. It is implemented in the form of an evolution algorithm
     (similar to :func:`~deap.algorithms.eaSimple`).
@@ -1125,6 +1158,7 @@ def harm(population,
         DOI 10.1007/s10710-015-9242-8
 
     """
+
     def _genpop(n, pickfrom=[], acceptfunc=lambda s: True, producesizes=False):
         # Generate a population of n individuals, using individuals in
         # *pickfrom* if possible, with a *acceptfunc* acceptance function.
@@ -1151,7 +1185,8 @@ def harm(population,
                 if opRandom < cxpb:
                     # Crossover
                     aspirant1, aspirant2 = toolbox.mate(
-                        *map(toolbox.clone, toolbox.select(population, 2)))
+                        *map(toolbox.clone, toolbox.select(population, 2))
+                    )
                     del aspirant1.fitness.values, aspirant2.fitness.values
                     if acceptfunc(len(aspirant1)):
                         producedpop.append(aspirant1)
@@ -1185,7 +1220,7 @@ def harm(population,
         nbrindsmodel = max(2000, len(population))
 
     logbook = tools.Logbook()
-    logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
+    logbook.header = ["gen", "nevals"] + (stats.fields if stats else [])
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
@@ -1217,22 +1252,20 @@ def harm(population,
                 naturalhist[indsize - 2] += 0.1
 
         # Normalization
-        naturalhist = [
-            val * len(population) / nbrindsmodel for val in naturalhist
-        ]
+        naturalhist = [val * len(population) / nbrindsmodel for val in naturalhist]
 
         # Cutoff point selection
         sortednatural = sorted(naturalpop, key=lambda ind: ind.fitness)
-        cutoffcandidates = sortednatural[int(len(population) * rho - 1):]
+        cutoffcandidates = sortednatural[int(len(population) * rho - 1) :]
         # Select the cutoff point, with an absolute minimum applied
         # to avoid weird cases in the first generations
         cutoffsize = max(mincutoff, len(min(cutoffcandidates, key=len)))
 
         # Compute the target distribution
         def targetfunc(x):
-            return (gamma * len(population) * math.log(2)
-                    / halflifefunc(x)) * math.exp(-math.log(2)
-                                                  * (x - cutoffsize) / halflifefunc(x))
+            return (gamma * len(population) * math.log(2) / halflifefunc(x)) * math.exp(
+                -math.log(2) * (x - cutoffsize) / halflifefunc(x)
+            )
 
         targethist = [
             naturalhist[binidx] if binidx <= cutoffsize else targetfunc(binidx)
@@ -1240,9 +1273,7 @@ def harm(population,
         ]
 
         # Compute the probabilities distribution
-        probhist = [
-            t / n if n > 0 else t for n, t in zip(naturalhist, targethist)
-        ]
+        probhist = [t / n if n > 0 else t for n, t in zip(naturalhist, targethist)]
 
         def probfunc(s):
             return probhist[s] if s < len(probhist) else targetfunc(s)
@@ -1252,10 +1283,12 @@ def harm(population,
 
         # Generate offspring using the acceptance probabilities
         # previously computed
-        offspring = _genpop(len(population),
-                            pickfrom=naturalpop,
-                            acceptfunc=acceptfunc,
-                            producesizes=False)
+        offspring = _genpop(
+            len(population),
+            pickfrom=naturalpop,
+            acceptfunc=acceptfunc,
+            producesizes=False,
+        )
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
@@ -1357,12 +1390,7 @@ def graph(expr):
 ######################################
 
 
-def mutSemantic(individual,
-                gen_func=genGrow,
-                pset=None,
-                ms=None,
-                min=2,
-                max=6):
+def mutSemantic(individual, gen_func=genGrow, pset=None, ms=None, min=2, max=6):
     """
     Implementation of the Semantic Mutation operator. [Geometric semantic genetic
     programming, Moraglio et al., 2012]
@@ -1394,15 +1422,16 @@ def mutSemantic(individual,
         >>> ctr == len(individual)
         True
     """
-    for p in ['lf', 'mul', 'add', 'sub']:
-        assert p in pset.mapping, "A '" + p + \
-            "' function is required in order to perform semantic mutation"
+    for p in ["lf", "mul", "add", "sub"]:
+        assert p in pset.mapping, (
+            "A '" + p + "' function is required in order to perform semantic mutation"
+        )
 
     tr1 = gen_func(pset, min, max)
     tr2 = gen_func(pset, min, max)
     # Wrap mutation with a logistic function
-    tr1.insert(0, pset.mapping['lf'])
-    tr2.insert(0, pset.mapping['lf'])
+    tr1.insert(0, pset.mapping["lf"])
+    tr2.insert(0, pset.mapping["lf"])
     if ms is None:
         ms = random.uniform(0, 2)
     mutation_step = Terminal(ms, False, object)
@@ -1418,7 +1447,7 @@ def mutSemantic(individual,
     new_ind.extend(tr1)
     new_ind.extend(tr2)
 
-    return new_ind,
+    return (new_ind,)
 
 
 def cxSemantic(ind1, ind2, gen_func=genGrow, pset=None, min=2, max=6):
@@ -1458,12 +1487,13 @@ def cxSemantic(ind1, ind2, gen_func=genGrow, pset=None, min=2, max=6):
         >>> ctr == len(ind2)
         True
     """
-    for p in ['lf', 'mul', 'add', 'sub']:
-        assert p in pset.mapping, "A '" + p + \
-            "' function is required in order to perform semantic crossover"
+    for p in ["lf", "mul", "add", "sub"]:
+        assert p in pset.mapping, (
+            "A '" + p + "' function is required in order to perform semantic crossover"
+        )
 
     tr = gen_func(pset, min, max)
-    tr.insert(0, pset.mapping['lf'])
+    tr.insert(0, pset.mapping["lf"])
     new_ind1 = ind1
     new_ind1.insert(0, pset.mapping["mul"])
     new_ind1.insert(0, pset.mapping["add"])
