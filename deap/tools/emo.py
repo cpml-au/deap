@@ -5,7 +5,7 @@ import math
 from operator import attrgetter, itemgetter
 import deap
 
-random = deap.rng
+import random
 
 numpy = deap.np
 

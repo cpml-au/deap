@@ -1,8 +1,6 @@
 from itertools import repeat
 import math
-import deap
-
-random = deap.rng
+import random
 
 
 try:

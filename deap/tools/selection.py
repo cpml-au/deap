@@ -1,9 +1,9 @@
 from operator import attrgetter
 from functools import partial
 import deap
-np = deap.np
+import random
 
-random = deap.rng
+np = deap.np
 
 
 ######################################
@@ -105,7 +105,9 @@ def selRoulette(individuals, k, fit_attr="fitness"):
     return chosen
 
 
-def selDoubleTournament(individuals, k, fitness_size, parsimony_size, fitness_first, fit_attr="fitness"):
+def selDoubleTournament(
+    individuals, k, fitness_size, parsimony_size, fitness_first, fit_attr="fitness"
+):
     """Tournament selection which use the size of the individuals in order
     to discriminate good solutions. This kind of tournament is obviously
     useless with fixed-length representation, but has been shown to
@@ -146,15 +148,16 @@ def selDoubleTournament(individuals, k, fitness_size, parsimony_size, fitness_fi
     .. [Luke2002fighting] Luke and Panait, 2002, Fighting bloat with
         nonparametric parsimony pressure
     """
-    assert (1 <= parsimony_size <=
-            2), "Parsimony tournament size has to be in the range [1, 2]."
+    assert (
+        1 <= parsimony_size <= 2
+    ), "Parsimony tournament size has to be in the range [1, 2]."
 
     def _sizeTournament(individuals, k, select):
         chosen = []
         for i in range(k):
             # Select two individuals from the population
             # The first individual has to be the shortest
-            prob = parsimony_size / 2.
+            prob = parsimony_size / 2.0
             ind1, ind2 = select(individuals, k=2)
 
             if len(ind1) > len(ind2):
@@ -237,11 +240,11 @@ def selLexicase(individuals, k):
 
         while len(cases) > 0 and len(candidates) > 1:
             f = max if fit_weights[cases[0]] > 0 else min
-            best_val_for_case = f(
-                x.fitness.values[cases[0]] for x in candidates)
+            best_val_for_case = f(x.fitness.values[cases[0]] for x in candidates)
 
             candidates = [
-                x for x in candidates if x.fitness.values[cases[0]] == best_val_for_case]
+                x for x in candidates if x.fitness.values[cases[0]] == best_val_for_case
+            ]
             cases.pop(0)
 
         selected_individuals.append(random.choice(candidates))
@@ -271,17 +274,21 @@ def selEpsilonLexicase(individuals, k, epsilon):
 
         while len(cases) > 0 and len(candidates) > 1:
             if fit_weights[cases[0]] > 0:
-                best_val_for_case = max(
-                    x.fitness.values[cases[0]] for x in candidates)
+                best_val_for_case = max(x.fitness.values[cases[0]] for x in candidates)
                 min_val_to_survive_case = best_val_for_case - epsilon
                 candidates = [
-                    x for x in candidates if x.fitness.values[cases[0]] >= min_val_to_survive_case]
+                    x
+                    for x in candidates
+                    if x.fitness.values[cases[0]] >= min_val_to_survive_case
+                ]
             else:
-                best_val_for_case = min(
-                    x.fitness.values[cases[0]] for x in candidates)
+                best_val_for_case = min(x.fitness.values[cases[0]] for x in candidates)
                 max_val_to_survive_case = best_val_for_case + epsilon
                 candidates = [
-                    x for x in candidates if x.fitness.values[cases[0]] <= max_val_to_survive_case]
+                    x
+                    for x in candidates
+                    if x.fitness.values[cases[0]] <= max_val_to_survive_case
+                ]
 
             cases.pop(0)
 
@@ -311,21 +318,27 @@ def selAutomaticEpsilonLexicase(individuals, k):
         random.shuffle(cases)
 
         while len(cases) > 0 and len(candidates) > 1:
-            errors_for_this_case = [x.fitness.values[cases[0]]
-                                    for x in candidates]
+            errors_for_this_case = [x.fitness.values[cases[0]] for x in candidates]
             median_val = np.median(errors_for_this_case)
             median_absolute_deviation = np.median(
-                [abs(x - median_val) for x in errors_for_this_case])
+                [abs(x - median_val) for x in errors_for_this_case]
+            )
             if fit_weights[cases[0]] > 0:
                 best_val_for_case = max(errors_for_this_case)
                 min_val_to_survive = best_val_for_case - median_absolute_deviation
                 candidates = [
-                    x for x in candidates if x.fitness.values[cases[0]] >= min_val_to_survive]
+                    x
+                    for x in candidates
+                    if x.fitness.values[cases[0]] >= min_val_to_survive
+                ]
             else:
                 best_val_for_case = min(errors_for_this_case)
                 max_val_to_survive = best_val_for_case + median_absolute_deviation
                 candidates = [
-                    x for x in candidates if x.fitness.values[cases[0]] <= max_val_to_survive]
+                    x
+                    for x in candidates
+                    if x.fitness.values[cases[0]] <= max_val_to_survive
+                ]
 
             cases.pop(0)
 
@@ -334,8 +347,7 @@ def selAutomaticEpsilonLexicase(individuals, k):
     return selected_individuals
 
 
-def selStochasticTournament(individuals, k, tournsize, prob,
-                            fit_attr="fitness"):
+def selStochasticTournament(individuals, k, tournsize, prob, fit_attr="fitness"):
     """Select the best individual among *tournsize* randomly chosen individuals, *k*
     times. The list returned contains references to the input *individuals*.
 
@@ -357,9 +369,12 @@ def selStochasticTournament(individuals, k, tournsize, prob,
     return chosen
 
 
-def tournament_with_elitism(individuals, num_elitist=0, tournsize=2,
-                            stochastic_tourn={'enabled': False,
-                                              'prob': [1., 0.]}):
+def tournament_with_elitism(
+    individuals,
+    num_elitist=0,
+    tournsize=2,
+    stochastic_tourn={"enabled": False, "prob": [1.0, 0.0]},
+):
     """Perform tournament selection with elitism.
 
     Args:
@@ -372,17 +387,28 @@ def tournament_with_elitism(individuals, num_elitist=0, tournsize=2,
 
     bestind = selBest(individuals, num_elitist)
 
-    if stochastic_tourn['enabled']:
-        return bestind + selStochasticTournament(individuals, n_tournament,
-                                                 tournsize=tournsize,
-                                                 prob=stochastic_tourn['prob']
-                                                 )
+    if stochastic_tourn["enabled"]:
+        return bestind + selStochasticTournament(
+            individuals,
+            n_tournament,
+            tournsize=tournsize,
+            prob=stochastic_tourn["prob"],
+        )
     else:
-        return bestind + selTournament(individuals, n_tournament,
-                                       tournsize=tournsize)
+        return bestind + selTournament(individuals, n_tournament, tournsize=tournsize)
 
 
-__all__ = ['selRandom', 'selBest', 'selWorst', 'selRoulette',
-           'selTournament', 'selDoubleTournament', 'selStochasticUniversalSampling',
-           'selLexicase', 'selEpsilonLexicase', 'selAutomaticEpsilonLexicase',
-           'selStochasticTournament', 'tournament_with_elitism']
+__all__ = [
+    "selRandom",
+    "selBest",
+    "selWorst",
+    "selRoulette",
+    "selTournament",
+    "selDoubleTournament",
+    "selStochasticUniversalSampling",
+    "selLexicase",
+    "selEpsilonLexicase",
+    "selAutomaticEpsilonLexicase",
+    "selStochasticTournament",
+    "tournament_with_elitism",
+]

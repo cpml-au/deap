@@ -1,7 +1,7 @@
 from itertools import repeat
 import warnings
 import deap
-random = deap.rng
+import random
 
 try:
     from collections.abc import Sequence
