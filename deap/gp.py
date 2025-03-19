@@ -562,7 +562,7 @@ def compileADF(expr, psets):
 ######################################
 # GP Program generation functions    #
 ######################################
-def genFull(pset, min_, max_, type_=None, is_pop=False):
+def genFull(pset, min_, max_, type_=None, seed=None):
     """Generate an expression where each leaf has the same depth
     between *min* and *max*.
 
@@ -579,13 +579,10 @@ def genFull(pset, min_, max_, type_=None, is_pop=False):
         """Expression generation stops when the depth is equal to height."""
         return depth == height
 
-    if is_pop:
-        return generate_with_args(pset, min_, max_, condition, type_)
-
-    return generate(pset, min_, max_, condition, type_)
+    return generate(pset, min_, max_, condition, type_, seed)
 
 
-def genGrow(pset, min_, max_, type_=None, is_pop=False):
+def genGrow(pset, min_, max_, type_=None, seed=None):
     """Generate an expression where each leaf might have a different depth
     between *min* and *max*.
 
@@ -606,13 +603,10 @@ def genGrow(pset, min_, max_, type_=None, is_pop=False):
             depth >= min_ and random.random() < pset.terminalRatio
         )
 
-    if is_pop:
-        return generate_with_args(pset, min_, max_, condition, type_)
-
-    return generate(pset, min_, max_, condition, type_)
+    return generate(pset, min_, max_, condition, type_, seed)
 
 
-def genHalfAndHalf(pset, min_, max_, type_=None, is_pop=False):
+def genHalfAndHalf(pset, min_, max_, type_=None, seed=None):
     """Generate an expression with a PrimitiveSet *pset*.
     Half the time, the expression is generated with :func:`~deap.gp.genGrow`,
     the other half, the expression is generated with :func:`~deap.gp.genFull`.
@@ -626,13 +620,13 @@ def genHalfAndHalf(pset, min_, max_, type_=None, is_pop=False):
     :returns: Either, a full or a grown tree.
     """
     method = random.choice((genGrow, genFull))
-    return method(pset, min_, max_, type_, is_pop)
+    return method(pset, min_, max_, type_, seed)
 
 
 # PATCH taken from https://gist.github.com/macrintr
 
 
-def generate(pset, min_, max_, condition, type_=__type__):
+def generate(pset, min_, max_, condition, type_=__type__, seed=None):
     """Generate a Tree as a list of list. The tree is build
     from the root to the leaves, and it stop growing when the
     condition is fulfilled.
@@ -684,6 +678,7 @@ def generate(pset, min_, max_, condition, type_=__type__):
         SOLUTION: A primitive set must be well-designed to prevent those type loops.
 
     """
+    random.seed(seed)
     if type_ is None:
         type_ = pset.ret
     in_type_ = type_
@@ -754,24 +749,6 @@ def generate(pset, min_, max_, condition, type_=__type__):
                 if isclass(term):
                     term = term()
                 expr.append(term)
-
-    return expr
-
-
-def generate_with_args(pset, min_, max_, condition, type_=__type__):
-    # NOTE: ADD DOCUMENTATION
-    args_list = pset.arguments
-    # rename args as original
-    args_list = ["ARG" + str(i) for i in range(len(pset.arguments))]
-    arg_check = False
-    while not arg_check:
-        expr = generate(pset, min_, max_, condition, type_)
-        # print([i.name for i in expr])
-        str_expr = [i.name for i in expr]
-        for i in args_list:
-            count = str_expr.count(i)
-            if count > 0:
-                arg_check = True
 
     return expr
 
