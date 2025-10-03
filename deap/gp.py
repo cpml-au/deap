@@ -148,7 +148,8 @@ class PrimitiveTree(list):
                 try:
                     token = eval(token)
                 except NameError:
-                    raise TypeError("Unable to evaluate terminal: {}.".format(token))
+                    raise TypeError(
+                        "Unable to evaluate terminal: {}.".format(token))
 
                 if type_ is None:
                     type_ = type(token)
@@ -156,7 +157,8 @@ class PrimitiveTree(list):
                 if not issubclass(type(token), type_):
                     raise TypeError(
                         "Terminal {} type {} does not "
-                        "match the expected one: {}.".format(token, type(token), type_)
+                        "match the expected one: {}.".format(
+                            token, type(token), type_)
                     )
 
                 expr.append(Terminal(token, False, type_))
@@ -562,7 +564,7 @@ def compileADF(expr, psets):
 ######################################
 # GP Program generation functions    #
 ######################################
-def genFull(pset, min_, max_, type_=None, seed=None):
+def genFull(pset, min_, max_, max_length, type_=None, seed=None):
     """Generate an expression where each leaf has the same depth
     between *min* and *max*.
 
@@ -579,10 +581,10 @@ def genFull(pset, min_, max_, type_=None, seed=None):
         """Expression generation stops when the depth is equal to height."""
         return depth == height
 
-    return generate(pset, min_, max_, condition, type_, seed)
+    return generate(pset, min_, max_, max_length, condition, type_, seed)
 
 
-def genGrow(pset, min_, max_, type_=None, seed=None):
+def genGrow(pset, min_, max_, max_length, type_=None, seed=None):
     """Generate an expression where each leaf might have a different depth
     between *min* and *max*.
 
@@ -603,10 +605,10 @@ def genGrow(pset, min_, max_, type_=None, seed=None):
             depth >= min_ and random.random() < pset.terminalRatio
         )
 
-    return generate(pset, min_, max_, condition, type_, seed)
+    return generate(pset, min_, max_, max_length, condition, type_, seed)
 
 
-def genHalfAndHalf(pset, min_, max_, type_=None, seed=None):
+def genHalfAndHalf(pset, min_, max_, max_length, type_=None, seed=None):
     """Generate an expression with a PrimitiveSet *pset*.
     Half the time, the expression is generated with :func:`~deap.gp.genGrow`,
     the other half, the expression is generated with :func:`~deap.gp.genFull`.
@@ -620,13 +622,13 @@ def genHalfAndHalf(pset, min_, max_, type_=None, seed=None):
     :returns: Either, a full or a grown tree.
     """
     method = random.choice((genGrow, genFull))
-    return method(pset, min_, max_, type_, seed)
+    return method(pset, min_, max_, max_length, type_, seed)
 
 
 # PATCH taken from https://gist.github.com/macrintr
 
 
-def generate(pset, min_, max_, condition, type_=__type__, seed=None):
+def generate(pset, min_, max_, max_length, condition, type_=__type__, seed=None):
     """Generate a Tree as a list of list. The tree is build
     from the root to the leaves, and it stop growing when the
     condition is fulfilled.
@@ -686,7 +688,7 @@ def generate(pset, min_, max_, condition, type_=__type__, seed=None):
     height = random.randint(min_, max_)
     stack = [(0, type_)]
     while len(stack) != 0:
-        if len(expr) > 100:
+        if len(expr) > max_length:
             expr = []
             type_ = in_type_
             height = random.randint(min_, max_)
@@ -954,7 +956,8 @@ def mutInsert(individual, pset):
 
     new_node = choice(primitives)
     new_subtree = [None] * len(new_node.args)
-    position = choice([i for i, a in enumerate(new_node.args) if a == node.ret])
+    position = choice(
+        [i for i, a in enumerate(new_node.args) if a == node.ret])
 
     for i, arg_type in enumerate(new_node.args):
         if i != position:
@@ -963,7 +966,7 @@ def mutInsert(individual, pset):
                 term = term()
             new_subtree[i] = term
 
-    new_subtree[position : position + 1] = individual[slice_]
+    new_subtree[position: position + 1] = individual[slice_]
     new_subtree.insert(0, new_node)
     individual[slice_] = new_subtree
     return (individual,)
@@ -1229,11 +1232,12 @@ def harm(
                 naturalhist[indsize - 2] += 0.1
 
         # Normalization
-        naturalhist = [val * len(population) / nbrindsmodel for val in naturalhist]
+        naturalhist = [val * len(population) /
+                       nbrindsmodel for val in naturalhist]
 
         # Cutoff point selection
         sortednatural = sorted(naturalpop, key=lambda ind: ind.fitness)
-        cutoffcandidates = sortednatural[int(len(population) * rho - 1) :]
+        cutoffcandidates = sortednatural[int(len(population) * rho - 1):]
         # Select the cutoff point, with an absolute minimum applied
         # to avoid weird cases in the first generations
         cutoffsize = max(mincutoff, len(min(cutoffcandidates, key=len)))
@@ -1250,7 +1254,8 @@ def harm(
         ]
 
         # Compute the probabilities distribution
-        probhist = [t / n if n > 0 else t for n, t in zip(naturalhist, targethist)]
+        probhist = [t / n if n > 0 else t for n,
+                    t in zip(naturalhist, targethist)]
 
         def probfunc(s):
             return probhist[s] if s < len(probhist) else targetfunc(s)
