@@ -564,7 +564,7 @@ def compileADF(expr, psets):
 ######################################
 # GP Program generation functions    #
 ######################################
-def genFull(pset, min_, max_, max_length, type_=None, seed=None):
+def genFull(pset, min_, max_, max_length=100, type_=None, seed=None):
     """Generate an expression where each leaf has the same depth
     between *min* and *max*.
 
@@ -581,10 +581,10 @@ def genFull(pset, min_, max_, max_length, type_=None, seed=None):
         """Expression generation stops when the depth is equal to height."""
         return depth == height
 
-    return generate(pset, min_, max_, max_length, condition, type_, seed)
+    return generate(pset, min_, max_, condition, max_length,  type_, seed)
 
 
-def genGrow(pset, min_, max_, max_length, type_=None, seed=None):
+def genGrow(pset, min_, max_, max_length=100, type_=None, seed=None):
     """Generate an expression where each leaf might have a different depth
     between *min* and *max*.
 
@@ -605,10 +605,10 @@ def genGrow(pset, min_, max_, max_length, type_=None, seed=None):
             depth >= min_ and random.random() < pset.terminalRatio
         )
 
-    return generate(pset, min_, max_, max_length, condition, type_, seed)
+    return generate(pset, min_, max_, condition, max_length, type_, seed)
 
 
-def genHalfAndHalf(pset, min_, max_, max_length, type_=None, seed=None):
+def genHalfAndHalf(pset, min_, max_, max_length=100, type_=None, seed=None):
     """Generate an expression with a PrimitiveSet *pset*.
     Half the time, the expression is generated with :func:`~deap.gp.genGrow`,
     the other half, the expression is generated with :func:`~deap.gp.genFull`.
@@ -628,7 +628,7 @@ def genHalfAndHalf(pset, min_, max_, max_length, type_=None, seed=None):
 # PATCH taken from https://gist.github.com/macrintr
 
 
-def generate(pset, min_, max_, max_length, condition, type_=__type__, seed=None):
+def generate(pset, min_, max_, condition, max_length=100, type_=__type__, seed=None):
     """Generate a Tree as a list of list. The tree is build
     from the root to the leaves, and it stop growing when the
     condition is fulfilled.
