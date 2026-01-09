@@ -1009,7 +1009,7 @@ def mixedMutate(individual, expr, pset, prob):
     """Implements a mixed mutation operator that randomly chooses among
     mutUniform, mutNodeReplacement and mutShrink with given probabilities.
     """
-    chosen_index = int(np.random.choice(range(3), 1, p=prob))
+    chosen_index = int(np.random.choice(range(3), 1, p=prob)[0])
     if chosen_index == 0:
         return mutUniform(individual, expr, pset)
     elif chosen_index == 1:
