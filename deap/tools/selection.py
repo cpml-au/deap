@@ -361,7 +361,7 @@ def selStochasticTournament(individuals, k, tournsize, prob, fit_attr="fitness")
     for _ in range(k):
         aspirants = selRandom(individuals, tournsize)
         aspirants.sort(key=attrgetter(fit_attr), reverse=True)
-        chosen_index = int(np.random.choice(range(tournsize), 1, p=prob))
+        chosen_index = int(np.random.choice(range(tournsize), 1, p=prob)[0])
         chosen.append(aspirants[chosen_index])
     return chosen
 
